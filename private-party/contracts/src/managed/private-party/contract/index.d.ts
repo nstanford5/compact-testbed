@@ -15,6 +15,7 @@ export type ImpureCircuits<PS> = {
   checkIn(context: __compactRuntime.CircuitContext<PS>,
           participantPk_0: Uint8Array,
           _organizerSk_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+  chainStartParty(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
 }
 
 export type PureCircuits = {
@@ -30,6 +31,7 @@ export type Circuits<PS> = {
   checkIn(context: __compactRuntime.CircuitContext<PS>,
           participantPk_0: Uint8Array,
           _organizerSk_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+  chainStartParty(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
   publicKey(context: __compactRuntime.CircuitContext<PS>, _sk_0: Uint8Array): __compactRuntime.CircuitResults<PS, Uint8Array>;
 }
 

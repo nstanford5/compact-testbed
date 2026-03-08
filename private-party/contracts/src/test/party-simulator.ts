@@ -82,6 +82,12 @@ export class PartySimulator {
         ).context;
     }
 
+    public chainStartParty(): void {
+        this.circuitContext = this.contract.impureCircuits.chainStartParty(
+            this.circuitContext,
+        ).context;
+    }
+
     // don't need to write this because it is an internal contract function?
     // public commitWithSk(participantPk: Uint8Array, organizerSk: Uint8Array): Uint8Array {
     //     return this.contract.circuits.commitWithSk(
