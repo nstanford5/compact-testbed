@@ -56,6 +56,7 @@ export type Ledger = {
   };
   readonly partyState: PartyState;
   readonly partiers: bigint;
+  readonly maxListSize: bigint;
 }
 
 export type ContractReferenceLocations = any;

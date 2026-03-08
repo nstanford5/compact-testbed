@@ -2,24 +2,24 @@ import {
     type CircuitContext,
     sampleContractAddress,
     createConstructorContext,
-    createCircuitContext,
     CostModel,
     QueryContext,
-    convertFieldToBytes,
 } from "@midnight-ntwrk/compact-runtime";
-// verify these are correct
 import { 
     Contract,
     type Ledger,
     ledger,
     PartyState,
  } from "../managed/private-party/contract/index.js";
-import { type PartyPrivateState, witnesses, createPartyPrivateState } from "../witnesses.js";
+import { 
+    type PartyPrivateState, 
+    witnesses, 
+    createPartyPrivateState 
+} from "../witnesses.js";
 
 export class PartySimulator {
     readonly contract: Contract<PartyPrivateState>;
     circuitContext: CircuitContext<PartyPrivateState>;
-    //startingState: PartyState;
     startingState: PartyPrivateState;
 
     constructor() {
@@ -42,11 +42,6 @@ export class PartySimulator {
             ),
         };
     }
-    // public switchUser(secretKey: Uint8Array) {
-    //     this.circuitContext.currentPrivateState = {
-    //         secretKey,
-    //     };
-    // }
     
     // helper test function
     public getLedger(): Ledger {
@@ -58,7 +53,7 @@ export class PartySimulator {
         return this.circuitContext.currentPrivateState;
     }
 
-    // start contract circuits
+    // The rest are exported contract circuits
     public addOrganizer(newOrganizerPk: Uint8Array): void {
         this.circuitContext = this.contract.impureCircuits.addOrganizer(
             this.circuitContext,

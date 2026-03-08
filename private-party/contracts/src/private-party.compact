@@ -29,6 +29,7 @@ export ledger hashedPartyGoers: Set<Bytes<32>>;
 export ledger checkedInParty: Set<Bytes<32>>;
 export ledger partyState: PartyState;
 export ledger partiers: Counter;
+export ledger maxListSize: Uint<8>;
 
 witness startParty() : PartyState;
 
@@ -36,6 +37,7 @@ witness startParty() : PartyState;
 constructor(){
     organizers.insert(ownPublicKey());
     partyState = PartyState.NOT_READY;
+    maxListSize = 99;
 }
 
 export circuit addOrganizer(newOrganizerPk: ZswapCoinPublicKey): [] {
@@ -52,13 +54,13 @@ export circuit addParticipant(_participantPk: Bytes<32>, _organizerSk: Bytes<32>
     // only organizers can add party goers
     assert(organizers.member(ownPublicKey()), "You are not an organizer");
     assert(partyState == PartyState.NOT_READY, "The party has already started");
-    assert(partiers < 99, "The list is full.");
+    assert(partiers < maxListSize, "The list is full.");
 
     const participant = commitWithSk(_participantPk, _organizerSk);
     hashedPartyGoers.insert(disclose(participant));
     partiers.increment(1);
 
-    if (partiers == 99) {
+    if (partiers == maxListSize) {
         // start the party, locally
         const localPartyState = startParty();
         // don't trust, verify
@@ -70,13 +72,12 @@ export circuit addParticipant(_participantPk: Bytes<32>, _organizerSk: Bytes<32>
 export circuit checkIn(participantPk: Bytes<32>, _organizerSk: Bytes<32>): [] {
     assert(organizers.member(ownPublicKey()), "You are not an organizer");
     assert(partyState == PartyState.READY, "The party has not started yet");
-    assert(partiers < 99, "All guests have already checked in");
+    assert(partiers < maxListSize, "All guests have already checked in");
     assert(hashedPartyGoers.member(commitWithSk(participantPk, _organizerSk)), "You are not on the list");
 
     checkedInParty.insert(disclose(participantPk));
 }
 
-// add a manual startParty() function
 export circuit chainStartParty(): [] {
     assert(organizers.member(ownPublicKey()), "Only organizers can start the party");
     assert(partyState == PartyState.NOT_READY, "The party has already started");
