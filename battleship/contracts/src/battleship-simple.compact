@@ -20,11 +20,11 @@ import CompactStandardLibrary;
 
 export enum BoardState { UNSET, SET }
 export enum ShotState { MISS, HIT }
-enum TurnState {
+export enum TurnState {
     PLAYER_1_SHOOT,
     PLAYER_1_CHECK,
-    PLAYER_2_SHOOT,
-    PLAYER_2_CHECK,
+    PLAYER_2_SHOOT,// expected this
+    PLAYER_2_CHECK,// got this
 }
 export enum WinState {
     CONTINUE_PLAY,
@@ -32,8 +32,8 @@ export enum WinState {
     PLAYER_2_WINS
 }
 
-export ledger player1: ZswapCoinPublicKey;
-export ledger player2: ZswapCoinPublicKey;
+export ledger player1: Bytes<32>;
+export ledger player2: Bytes<32>;
 export ledger turn: TurnState;
 export ledger board1: Set<Bytes<32>>;// linear board shape until the complexity can be increased to 2D
 export ledger board2: Set<Bytes<32>>;// hashed storage of ship locations
@@ -58,7 +58,8 @@ constructor(_x1: Uint<8>, _x2: Uint<8>, _sk: Bytes<32>) {
     assert(_x1 <= 20 && _x2 <= 20, "Out of bounds, please keep ships on the board");
     
     // is this a safe way to track a player?
-    player1 = ownPublicKey();
+    const p1Pub = publicKey(_sk);
+    player1 = disclose(p1Pub);
 
     // hash the inputs to verify them later, user needs to provide the same value and _sk
     const hash1 = commitBoardSpace(_x1 as Bytes<32>, _sk);
@@ -77,13 +78,14 @@ constructor(_x1: Uint<8>, _x2: Uint<8>, _sk: Bytes<32>) {
 }
 
 export circuit acceptGame(_x1: Uint<8>, _x2: Uint<8>, _sk: Bytes<32>) : [] {
-    assert(player1 != ownPublicKey(), "You cannot play against yourself");
+    const pub = publicKey(_sk);
+    assert(player1 != disclose(pub), "You cannot play against yourself");
     assert(board2State == BoardState.UNSET, "There is already a player2");
     assert(_x1 != _x2, "Cannot use the same number twice");
     assert(_x1 > 0 && _x2 > 0, "No zero index, please keep ships on the board");
     assert(_x1 <= 20 && _x2 <= 20, "Out of bounds, please keep ships on the board");
 
-    player2 = ownPublicKey();
+    player2 = disclose(pub);
 
     // hash inputs and store them to the ledger for lookup later
     // maybe this should be a Merkle Tree instead?
@@ -99,8 +101,11 @@ export circuit acceptGame(_x1: Uint<8>, _x2: Uint<8>, _sk: Bytes<32>) : [] {
     turn = TurnState.PLAYER_1_SHOOT;
 }
 
-export circuit player1Shoot (x: Uint<8>): [] {
-    assert(player1 == ownPublicKey(), "You are not player1");
+export circuit player1Shoot (x: Uint<8>, _sk: Bytes<32>): [] {
+    // I don't think I can simulate Bob calling into alices contract?
+    //assert(player1 == ownPublicKey(), "You are not player1");
+    const pub = publicKey(_sk);
+    assert(player1 == disclose(pub), "You are not player1");
     assert(board2State == BoardState.SET, "Player 2 has not yet set their board");
     assert(turn == TurnState.PLAYER_1_SHOOT, "It is not player1 turn to shoot");
     assert(winState == WinState.CONTINUE_PLAY, "A winner has already been declared");
@@ -112,11 +117,14 @@ export circuit player1Shoot (x: Uint<8>): [] {
     assert(!board2Hits.member(currentShot), "Cheat Detected: Player1: Attempt to repeat a previous HIT");
 
     player1Shot.pushFront(currentShot);
-    turn = TurnState.PLAYER_2_CHECK;
+    turn = TurnState.PLAYER_2_CHECK;// here
 }
 
-export circuit player2Shoot(x: Uint<8>): [] {
-    assert(player2 == ownPublicKey(), "You are not player2");
+export circuit player2Shoot(x: Uint<8>, _sk: Bytes<32>): [] {
+    // I dont think I can test Bob calling into Alices contract?
+    //assert(player2 == ownPublicKey(), "You are not player2");
+    const pub = publicKey(_sk);
+    assert(player2 == disclose(pub), "You are not player2");
     assert(turn == TurnState.PLAYER_2_SHOOT, "It is not player2 turn to shoot");
     assert(winState == WinState.CONTINUE_PLAY, "A winner has already been declared");
     assert(x > 0 && x <= 20, "Shot out of bounds, please shoot on the board");
@@ -131,7 +139,9 @@ export circuit player2Shoot(x: Uint<8>): [] {
 }
 
 export circuit checkBoard1 (_sk: Bytes<32>) : WinState {
-    assert(player1 == ownPublicKey(), "You are not player1");
+    const pub = publicKey(_sk);
+    assert(player1 == disclose(pub), "You are not player1");
+    //assert(player1 == ownPublicKey(), "You are not player1");
     assert(winState == WinState.CONTINUE_PLAY, "A winner has already been declared");
     assert(turn == TurnState.PLAYER_1_CHECK, "It is not Player 1 turn to CHECK");
     assert(!player2Shot.isEmpty(), "No shot to check");
@@ -163,7 +173,9 @@ export circuit checkBoard1 (_sk: Bytes<32>) : WinState {
 }
 
 export circuit checkBoard2 (_sk: Bytes<32>) : WinState {
-    assert(player2 == ownPublicKey(), "You are not player2");
+    //assert(player2 == ownPublicKey(), "You are not player2");
+    const pub = publicKey(_sk);
+    assert(player2 == disclose(pub), "You are not player2");
     assert(board2State == BoardState.SET, "Player 2 has not set the board yet");
     assert(winState == WinState.CONTINUE_PLAY, "A winner has already been declared");
     assert(turn == TurnState.PLAYER_2_CHECK, "It is not Player 2 turn to CHECK");
@@ -181,9 +193,10 @@ export circuit checkBoard2 (_sk: Bytes<32>) : WinState {
     assert(shotState == ShotState.HIT || shotState == ShotState.MISS, "Please provide a valid state");
 
     if(shotState == ShotState.MISS){
-
+        // don't trust, verify
         assert(!board2.member(honestyCheckHash), "Cheat Detected: Player 2: claimed a MISS, when it was in fact a HIT");
-    
+        // it doesn't get here..
+        turn = TurnState.PLAYER_2_SHOOT;
     } else if (shotState == ShotState.HIT) {
         // dont trust, verify
         assert(board2.member(honestyCheckHash), "Cheat Detected: Player 2: claimed a HIT, when is was in fact a MISS. Why would they do that?");
@@ -193,6 +206,7 @@ export circuit checkBoard2 (_sk: Bytes<32>) : WinState {
         // did someone win?
         winState = board2HitCount == 2 ? WinState.PLAYER_1_WINS : WinState.CONTINUE_PLAY;
     }
+    // it doesn't get here
     player1Shot.popFront();
     turn = TurnState.PLAYER_2_SHOOT;
     return winState;

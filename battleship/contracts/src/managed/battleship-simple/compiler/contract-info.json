@@ -47,6 +47,13 @@
             "type-name": "Uint",
             "maxval": 255
           }
+        },
+        {
+          "name": "_sk",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
         }
       ],
       "result-type": {
@@ -65,6 +72,13 @@
           "type": {
             "type-name": "Uint",
             "maxval": 255
+          }
+        },
+        {
+          "name": "_sk",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
           }
         }
       ],

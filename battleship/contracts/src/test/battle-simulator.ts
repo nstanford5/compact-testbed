@@ -18,6 +18,7 @@ import {
     BattlePrivateState,
     createBattlePrivateState
 } from '../witnesses.js';
+import { createEitherTestUser } from './utils.js';
 
 export class BattleSimulator {
     // declare types
@@ -59,17 +60,22 @@ export class BattleSimulator {
         };
     }
 
-    // helper function
+    // test helper function
     public getLedger(): Ledger {
         return ledger(this.circuitContext.currentQueryContext.state);
     }
 
-    // helper function
+    // test helper function
     public getPrivateState(): BattlePrivateState {
         return this.circuitContext.currentPrivateState;
     }
 
-    // exported smart contract circuits
+    // test helper function
+    public createTestUser(str: string): any {
+        return createEitherTestUser(str);
+    }
+
+    // exported smart contract circuit
     public acceptGame(x1: bigint, x2: bigint, sk: Uint8Array): void {
         this.circuitContext = this.contract.impureCircuits.acceptGame(
             this.circuitContext,
@@ -79,20 +85,25 @@ export class BattleSimulator {
         ).context;
     }
 
-    public player1Shoot(x: bigint): void {
+    // exported smart contract circuit
+    public player1Shoot(x: bigint, sk: Uint8Array): void {
         this.circuitContext = this.contract.impureCircuits.player1Shoot(
             this.circuitContext,
-            x
+            x,
+            sk
         ).context;
     }
 
-    public player2Shoot(x: bigint): void {
+    // exported smart contract circuit
+    public player2Shoot(x: bigint, sk: Uint8Array): void {
         this.circuitContext = this.contract.impureCircuits.player2Shoot(
             this.circuitContext,
-            x
+            x,
+            sk
         ).context;
     }
 
+    // exported smart contract circuit
     public checkBoard1(sk: Uint8Array): WinState {
         return this.contract.impureCircuits.checkBoard1(
             this.circuitContext,
@@ -100,6 +111,7 @@ export class BattleSimulator {
         ).result;
     }
 
+    // exported smart contract circuit
     public checkBoard2(sk: Uint8Array): WinState {
         return this.contract.impureCircuits.checkBoard2(
             this.circuitContext,
@@ -107,7 +119,7 @@ export class BattleSimulator {
         ).result;
     }
     
-
+    // exported smart contract circuit
     public publicKey(sk: Uint8Array): Uint8Array {
         return this.contract.circuits.publicKey(
             this.circuitContext,

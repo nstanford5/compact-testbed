@@ -4,6 +4,12 @@ export enum BoardState { UNSET = 0, SET = 1 }
 
 export enum ShotState { MISS = 0, HIT = 1 }
 
+export enum TurnState { PLAYER_1_SHOOT = 0,
+                        PLAYER_1_CHECK = 1,
+                        PLAYER_2_SHOOT = 2,
+                        PLAYER_2_CHECK = 3
+}
+
 export enum WinState { CONTINUE_PLAY = 0, PLAYER_1_WINS = 1, PLAYER_2_WINS = 2 }
 
 export type Witnesses<PS> = {
@@ -18,8 +24,12 @@ export type ImpureCircuits<PS> = {
              _x1_0: bigint,
              _x2_0: bigint,
              _sk_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
-  player1Shoot(context: __compactRuntime.CircuitContext<PS>, x_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  player2Shoot(context: __compactRuntime.CircuitContext<PS>, x_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+  player1Shoot(context: __compactRuntime.CircuitContext<PS>,
+               x_0: bigint,
+               _sk_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+  player2Shoot(context: __compactRuntime.CircuitContext<PS>,
+               x_0: bigint,
+               _sk_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
   checkBoard1(context: __compactRuntime.CircuitContext<PS>, _sk_0: Uint8Array): __compactRuntime.CircuitResults<PS, WinState>;
   checkBoard2(context: __compactRuntime.CircuitContext<PS>, _sk_0: Uint8Array): __compactRuntime.CircuitResults<PS, WinState>;
 }
@@ -33,17 +43,21 @@ export type Circuits<PS> = {
              _x1_0: bigint,
              _x2_0: bigint,
              _sk_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
-  player1Shoot(context: __compactRuntime.CircuitContext<PS>, x_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  player2Shoot(context: __compactRuntime.CircuitContext<PS>, x_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+  player1Shoot(context: __compactRuntime.CircuitContext<PS>,
+               x_0: bigint,
+               _sk_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+  player2Shoot(context: __compactRuntime.CircuitContext<PS>,
+               x_0: bigint,
+               _sk_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
   checkBoard1(context: __compactRuntime.CircuitContext<PS>, _sk_0: Uint8Array): __compactRuntime.CircuitResults<PS, WinState>;
   checkBoard2(context: __compactRuntime.CircuitContext<PS>, _sk_0: Uint8Array): __compactRuntime.CircuitResults<PS, WinState>;
   publicKey(context: __compactRuntime.CircuitContext<PS>, _sk_0: Uint8Array): __compactRuntime.CircuitResults<PS, Uint8Array>;
 }
 
 export type Ledger = {
-  readonly player1: { bytes: Uint8Array };
-  readonly player2: { bytes: Uint8Array };
-  readonly turn: number;
+  readonly player1: Uint8Array;
+  readonly player2: Uint8Array;
+  readonly turn: TurnState;
   board1: {
     isEmpty(): boolean;
     size(): bigint;
