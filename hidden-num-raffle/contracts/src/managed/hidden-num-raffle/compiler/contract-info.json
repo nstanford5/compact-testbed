@@ -1,0 +1,93 @@
+{
+  "compiler-version": "0.29.0",
+  "language-version": "0.21.0",
+  "runtime-version": "0.14.0",
+  "circuits": [
+    {
+      "name": "getTicket",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "_sk",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "revealWinner",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "winningNum",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        },
+        {
+          "name": "sk",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "claimWin",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "sk",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "publicKey",
+      "pure": true,
+      "proof": false,
+      "arguments": [
+        {
+          "name": "sk",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "contracts": [
+  ]
+}

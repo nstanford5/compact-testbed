@@ -11,17 +11,20 @@ enum State {
 }
 
 export ledger state: State;
-export ledger player1: ZswapCoinPublicKey;
+export ledger player1: Bytes<32>;
 export ledger numHash: Bytes<32>;
 
-constructor(sk: Bytes<32>) {
-    player1 = ownPublicKey();
+constructor(_sk: Bytes<32>) {
+    const pubKey = publicKey(_sk);
+    player1 = disclose(pubKey);
+    //player1 = ownPublicKey();
     state = State.UNSET;
 }
 
 // called by player2 to accept the challenge of guessing the number
-export circuit accept(player1Pk: ZswapCoinPublicKey, sk: Bytes<32>, numberGuess: Uint<8>): Boolean {
-    assert(state == State.SET, "No player1 present");
+export circuit accept(player1Pk: ZswapCoinPublicKey, _sk: Bytes<32>, numberGuess: Uint<8>): Boolean {
+    assert(state == State.SET, "No number has been set");
+    const pubKey = publicKey(_sk);
     assert(player1 != ownPublicKey(), "You can't play against yourself");
     // do I need player2 to pass in player1Pk and verify this?
     assert(player1Pk == player1, "This is the wrong game");

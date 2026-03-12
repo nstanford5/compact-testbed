@@ -1,0 +1,62 @@
+pragma language_version 0.21;
+import CompactStandardLibrary;
+
+export enum WinnerState {
+    UNSET,
+    SET
+}
+
+export ledger raffleOrganizer: Bytes<32>;
+export ledger hashedWinningNum: Bytes<32>;
+export ledger publicWinningNum: Uint<8>;
+export ledger winner: Bytes<32>;
+export ledger state: WinnerState;
+export ledger assignedNumbers: Counter;
+export ledger assignedTicketHolders: Map<Bytes<32>, Uint<8>>;
+
+constructor(winningNum: Uint<8>, _sk: Bytes<32>) {
+    assert(winningNum >= 1 && winningNum <= 10, "Winning number must be between 1-10");
+    const pubKey = publicKey(_sk);
+    raffleOrganizer = disclose(pubKey);
+    hashedWinningNum = commitWithSk(winningNum as Bytes<32>, _sk);
+    state = WinnerState.UNSET;
+    // @TODO -- add token deposit to ensure organizer reveals
+}
+
+// @TODO -- add token deposit to buy ticket
+export circuit getTicket(_sk: Bytes<32>) : [] {
+    assert(state == WinnerState.UNSET, "A winner has already been declared");
+    assert(assignedNumbers < 10, "Max tickets reached");
+    const pubKey = publicKey(_sk);
+    assert(!assignedTicketHolders.member(disclose(pubKey)), "You are already in the list");
+    assert(disclose(pubKey) != raffleOrganizer, "The organizer cannot participate");
+
+    assignedNumbers.increment(1);// account for 0 index for users
+    assignedTicketHolders.insert(disclose(pubKey), assignedNumbers as Uint<8>);
+}
+
+export circuit revealWinner(winningNum: Uint<8>, sk: Bytes<32>) : [] {
+    const pubKey = publicKey(sk);
+    assert(disclose(pubKey) == raffleOrganizer, "You are not the organizer");
+
+    const commitCheck = commitWithSk(winningNum as Bytes<32>, sk);
+    assert(commitCheck == hashedWinningNum, "Wrong winning number provided, shame on you");    
+    publicWinningNum = disclose(winningNum);
+    state = WinnerState.SET;
+}
+
+// @TODO -- send tokens to winner
+export circuit claimWin(sk: Bytes<32>) : [] {
+    const pubKey = publicKey(sk);
+    assert(assignedTicketHolders.member(disclose(pubKey)), "You are not an assigned ticket holder");
+    assert(assignedTicketHolders.lookup(disclose(pubKey)) == publicWinningNum, "You do not have the winning number");
+    winner = disclose(pubKey);
+}
+ 
+circuit commitWithSk(winningNum: Bytes<32>, sk: Bytes<32>) : Bytes<32> {
+    return disclose(persistentHash<Vector<2, Bytes<32>>>([winningNum, sk]));
+}
+
+export circuit publicKey(sk: Bytes<32>): Bytes<32> {
+    return persistentHash<Vector<2, Bytes<32>>>([pad(32, "tip-board:pk:"), sk]);
+}
