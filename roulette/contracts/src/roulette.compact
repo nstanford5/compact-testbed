@@ -9,40 +9,67 @@
 // 4. Assign winners (done)
 // 5. [later] pay out
 
-// Utils
-// number => color, 1-12, 13-26, 27-36
-
 pragma language_version 0.21;
 import CompactStandardLibrary;
 
-export enum ReadyState {
-    NOT_READY,
-    READY
+export enum BetState {
+    CLOSED,
+    OPEN
 }
 
-// not really using this yet
 export enum Color {
     GREEN,
     RED,
     BLACK
 }
 
-// @TODO -- does the design (specifically of the Map structure)
-// mean that each number can only be bet on once?
-// maybe it should be re-arranged by Address?
+export enum Thirds {
+    FIRST,
+    SECOND,
+    THIRD
+}
+
+export enum EvenOdd {
+    EVEN,
+    ODD
+}
+
+export enum BigSmall {
+    SMALL,
+    BIG
+}
+
 export ledger theHouse: ZswapCoinPublicKey;
 export ledger maxBet: Uint<8>;
+export ledger maxBetCount: Uint<8>;
 export ledger winningNumHash: Bytes<32>;
 export ledger winningNumPublic: Uint<8>;
-export ledger readyState: ReadyState;
-// numberToBetOn, Map<address, betAmount>
-export ledger playerList: Map<Uint<8>, Map<ZswapCoinPublicKey, Uint<8>>>;
-// address, betAmount
-export ledger winnerList: Map<ZswapCoinPublicKey, Uint<8>>;
+export ledger betState: BetState;
+// address, number, amount
+// nested map is a good idea, but you MUST use the full chain of lookups to
+// get to the last piece of data, which means you would need the user
+// to input the same data again. Seperate Maps is probably better UX
+// export ledger numberBets: Map<ZswapCoinPublicKey, Map<Uint<8>, Uint<8>>>;
+export ledger numberBets: Map<ZswapCoinPublicKey, Uint<8>>;
+export ledger numberBetAmounts: Map<ZswapCoinPublicKey, Uint<8>>;
+export ledger colorBets: Map<ZswapCoinPublicKey, Color>;
+export ledger colorBetAmounts: Map<ZswapCoinPublicKey, Uint<8>>;
+export ledger thirdBets: Map<ZswapCoinPublicKey, Thirds>;
+export ledger thirdBetAmounts: Map<ZswapCoinPublicKey, Uint<8>>;
+export ledger evenOddBets: Map<ZswapCoinPublicKey, EvenOdd>;
+export ledger evenOddBetAmounts: Map<ZswapCoinPublicKey, Uint<8>>;
+export ledger bigSmallBets: Map<ZswapCoinPublicKey, BigSmall>;
+export ledger bigSmallBetAmounts: Map<ZswapCoinPublicKey, Uint<8>>;
+// address, winAmount (total of all bets)
+export ledger winnerList: Map<ZswapCoinPublicKey, Uint<32>>;
 export ledger color: Color;
+export ledger third: Thirds;
+export ledger evenOdd: EvenOdd;
+export ledger betCount: Counter;
+export ledger bigSmall: BigSmall;
 
 
-constructor(setMaxBet: Uint<8>, _winningNum: Uint<8>, _sk: Bytes<32>) {
+constructor(setMaxBet: Uint<8>, setMaxBetCount: Uint<8>, _winningNum: Uint<8>, _sk: Bytes<32>) {
     // single zero roulette for everyone
     assert(_winningNum >= 0 && _winningNum <= 36, "Cheat Detected: theHouse: Please keep the number on the table");
     // assign public admin address
@@ -55,46 +82,173 @@ constructor(setMaxBet: Uint<8>, _winningNum: Uint<8>, _sk: Bytes<32>) {
     const hash = commitWithSk(_winningNum as Bytes<32>, _sk);
     winningNumHash = hash;
     // assign ready state to accept wagers
-    readyState = ReadyState.READY;
+    betState = BetState.OPEN;
+    maxBetCount = disclose(setMaxBetCount);
 }
 
-// placeBet(amount, number)
-// @TODO -- add different bet functions for different types
-export circuit placeBet(amount: Uint<8>, number: Uint<8>) : [] {
-    assert(readyState == ReadyState.READY, "Not ready to accept bets yet");
-    assert(playerList.size() < 10, "Sorry, the table is full");
+export circuit betColor(betAmount: Uint<8>, colorBet: Color): [] {
+    assert(betState == BetState.OPEN, "Not ready to accept bets yet");
+    assert(betCount < maxBetCount, "Sorry, the table is full");
+    assert(colorBet == Color.RED || 
+        colorBet == Color.BLACK || 
+        colorBet == Color.GREEN, "Please choose a valid color");// if it is single zero roulette, the color here doesn't matter
+    
+    // bets are all public knowledge
+    const player = disclose(ownPublicKey());
+    const pubAmount = disclose(betAmount);// this would be the interesting bit to keep private
+    const pubColor = disclose(colorBet);
+
+    colorBets.insert(player, disclose(colorBet));
+    colorBetAmounts.insert(player, pubAmount);
+    betCount.increment(1);
+}
+
+export circuit betThirds(betAmount: Uint<8>, thirdBet: Thirds): [] {
+    assert(betState == BetState.OPEN, "Not ready to accept bets yet");
+    assert(betCount < maxBetCount, "Sorry, the table is full");
+    assert(betAmount <= maxBet, "That bet exceeds the table limit");
+    assert(
+        thirdBet == Thirds.FIRST || 
+        thirdBet == Thirds.SECOND || 
+        thirdBet == Thirds.THIRD, "Please choose a valid third bet");
+
+    const pubAmount = disclose(betAmount);// this is the interesting bit to keep private
+    const pubThird = disclose(thirdBet);
+    const player = disclose(ownPublicKey());
+
+    thirdBets.insert(player, pubThird);
+    thirdBetAmounts.insert(player, pubAmount);
+    betCount.increment(1);
+}
+
+export circuit betEvenOdd(betAmount: Uint<8>, betEvenOdd: EvenOdd) : [] {
+    assert(betState == BetState.OPEN, "Not ready to accept bets yet");
+    assert(betAmount <= maxBet, "That bet exceeds the table limit");
+    assert(betCount <= maxBetCount, "Sorry, the table is full");
+    assert(
+        betEvenOdd == EvenOdd.EVEN ||
+        betEvenOdd == EvenOdd.ODD, "Please choose only Even or Odd"
+    );
+
+    const pubAmount = disclose(betAmount);
+    const player = disclose(ownPublicKey());
+    const pubEvenOdd = disclose(betEvenOdd);
+
+    evenOddBets.insert(player, pubEvenOdd);
+    evenOddBetAmounts.insert(player, pubAmount);
+    betCount.increment(1);
+}
+
+export circuit betBigSmall(betAmount: Uint<8>, betBigSmall: BigSmall): [] {
+    assert(betState == BetState.OPEN, "Not ready to accept bets yet");
+    assert(betAmount <= maxBet, "That bet exceeds the table limit");
+    assert(betCount <= maxBetCount, "Sorry, the table is full");
+    assert(betBigSmall == BigSmall.SMALL || betBigSmall == BigSmall.BIG, "Please choose only Big or Small");
+
+    const pubAmount = disclose(betAmount);
+    const player = disclose(ownPublicKey());
+    const pubBigSmall = disclose(betBigSmall);
+
+    bigSmallBets.insert(player, bigSmall);
+    bigSmallBetAmounts.insert(player, pubAmount);
+    betCount.increment(1);
+}
+
+export circuit betNumber(betAmount: Uint<8>, number: Uint<8>) : [] {
+    assert(betState == BetState.OPEN, "Not ready to accept bets yet");
+    assert(betCount < maxBetCount, "Sorry, the table is full");
     const player = disclose(ownPublicKey());
     assert(number >= 0 && number <= 36, "Please keep the number on the board");
-    assert(amount <= maxBet, "Sorry, your bet is too high");
+    assert(betAmount <= maxBet, "Sorry, your bet is too high");
     
-    const pubAmount = disclose(amount);
+    const pubAmount = disclose(betAmount);
 
-    // initialize the nested map with default values for the given number
-    playerList.insert(disclose(number), default<Map<ZswapCoinPublicKey, Uint<8>>>);
-    playerList.lookup(number).insert(player, pubAmount);
+    // option #1: nested Map
+    // // initialize inner Map with default values for given player
+    // numberBets.insert(player, default<Map<Uint<8>, Uint<8>>>);
+    // numberBets.lookup(player).insert(disclose(number), pubAmount);
+
+    // // a list for checking player access to functions
+    // playerList.insert(player);
+
+    // option #2: seperate Maps
+    numberBets.insert(player, disclose(number));
+    numberBetAmounts.insert(player, pubAmount);
+    betCount.increment(1);
 }
 
 export circuit revealWinningNumber(winningNum: Uint<8>, _sk: Bytes<32>): [] {
     assert(ownPublicKey() == theHouse, "Only the House can reveal the number");
     const hash = commitWithSk(winningNum as Bytes<32>, _sk);
     assert(hash == winningNumHash, "Cheat Detected: theHouse: tried to change the winning number");
+    betState = BetState.CLOSED;// maybe this should be attached to the counter increments?
     winningNumPublic = disclose(winningNum);
     color = getColor(winningNumPublic);
+    third = getThirds(winningNumPublic);
+    evenOdd = getOdd(winningNumPublic) ? EvenOdd.EVEN : EvenOdd.ODD;
+    bigSmall = (winningNumPublic <= 18) ? BigSmall.SMALL : BigSmall.BIG;
 }
 
-export circuit checkForWin(number: Uint<8>, amount: Uint<8>): [] {
+// option #1: nested map access, requires input parameters = bad UX?
+// export circuit checkForWin(number: Uint<8>, amount: Uint<8>): [] {
+//     const pubAddress = disclose(ownPublicKey());
+//     assert(pubAddress != theHouse, "Only players can check for a win");
+//     assert(playerList.member(pubAddress), "You did not place a bet");
+//     assert(playerList.lookup(number).member(pubAddress), "You don't have a winning number");
+//     const bet = playerList.lookup(number).lookup(pubAddress);
+//     // add to winners Map
+//     winnerList.insert(pubAddress, disclose(bet));
+// }
+
+// needs to check for wins from any of the possibilities
+export circuit claimWin(): [] {
     const pubAddress = disclose(ownPublicKey());
     assert(pubAddress != theHouse, "Only players can check for a win");
-    assert(playerList.lookup(number).member(pubAddress), "You don't have a winning number");
-    const bet = playerList.lookup(number).lookup(pubAddress);
-    // add to winners Map
-    winnerList.insert(pubAddress, disclose(bet));
+    assert(
+        numberBets.lookup(pubAddress) == winningNumPublic ||
+        colorBets.lookup(pubAddress) == color ||
+        thirdBets.lookup(pubAddress) == third ||
+        evenOddBets.lookup(pubAddress) == evenOdd ||
+        bigSmallBets.lookup(pubAddress) == bigSmall
+        , "You did not place a winning bet"
+    );
+    // assign them as a winner, then update the amount on the ledger, accounting for
+    // all available bet types
+    winnerList.insert(pubAddress, 0);
+    if(numberBets.lookup(pubAddress) == winningNumPublic) {
+        const tempAmount = winnerList.lookup(pubAddress);
+        const newAmount = tempAmount + numberBetAmounts.lookup(pubAddress);
+        winnerList.insert(pubAddress, newAmount as Uint<32>);
+    }
+    if(colorBets.lookup(pubAddress) == color) {
+        const tempAmount = winnerList.lookup(pubAddress);
+        const newAmount = tempAmount + colorBetAmounts.lookup(pubAddress);
+        winnerList.insert(pubAddress, newAmount as Uint<32>);
+    }
+    if(thirdBets.lookup(pubAddress) == third) {
+        const tempAmount = winnerList.lookup(pubAddress);
+        const newAmount = tempAmount + thirdBetAmounts.lookup(pubAddress);
+        winnerList.insert(pubAddress, newAmount as Uint<32>);
+    }
+    if(evenOddBets.lookup(pubAddress) == evenOdd) {
+        const tempAmount = winnerList.lookup(pubAddress);
+        const newAmount = tempAmount + evenOddBetAmounts.lookup(pubAddress);
+        winnerList.insert(pubAddress, newAmount as Uint<32>);
+    }
+    if(bigSmallBets.lookup(pubAddress) == bigSmall) {
+        const tempAmount = winnerList.lookup(pubAddress);
+        const newAmount = tempAmount + bigSmallBetAmounts.lookup(pubAddress);
+        winnerList.insert(pubAddress, newAmount as Uint<32>);
+    }
 }
 
-circuit getColor(num: Uint<8>) : Color {
-    if(num == 0){
-        return Color.GREEN;
-    }
+circuit getThirds(num: Uint<8>): Thirds {
+    if(num <= 12) { return Thirds.FIRST; }
+    if(num > 12 && num < 25) { return Thirds.SECOND; }
+    else return Thirds.THIRD;
+}
+
+circuit getOdd(num: Uint<8>): Boolean {
     if(
         num == 1 ||
         num == 3 ||
@@ -115,7 +269,18 @@ circuit getColor(num: Uint<8>) : Color {
         num == 33 ||
         num == 35
     ) { 
-        return Color.RED;   
+        return true;   
+    } else {
+        return false;
+    }
+}
+
+circuit getColor(num: Uint<8>) : Color {
+    if(num == 0){
+        return Color.GREEN;
+    }
+    if(getOdd(num) == true) {
+        return Color.RED;
     }
     else {
         return Color.BLACK;

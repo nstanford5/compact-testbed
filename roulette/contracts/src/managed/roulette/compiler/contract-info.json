@@ -1,0 +1,197 @@
+{
+  "compiler-version": "0.29.0",
+  "language-version": "0.21.0",
+  "runtime-version": "0.14.0",
+  "circuits": [
+    {
+      "name": "betColor",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "betAmount",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        },
+        {
+          "name": "colorBet",
+          "type": {
+            "type-name": "Enum",
+            "name": "Color",
+            "elements": [
+              "GREEN",
+              "RED",
+              "BLACK"
+            ]
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "betThirds",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "betAmount",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        },
+        {
+          "name": "thirdBet",
+          "type": {
+            "type-name": "Enum",
+            "name": "Thirds",
+            "elements": [
+              "FIRST",
+              "SECOND",
+              "THIRD"
+            ]
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "betEvenOdd",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "betAmount",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        },
+        {
+          "name": "betEvenOdd",
+          "type": {
+            "type-name": "Enum",
+            "name": "EvenOdd",
+            "elements": [
+              "EVEN",
+              "ODD"
+            ]
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "betBigSmall",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "betAmount",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        },
+        {
+          "name": "betBigSmall",
+          "type": {
+            "type-name": "Enum",
+            "name": "BigSmall",
+            "elements": [
+              "SMALL",
+              "BIG"
+            ]
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "betNumber",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "betAmount",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        },
+        {
+          "name": "number",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "revealWinningNumber",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "winningNum",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        },
+        {
+          "name": "_sk",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "claimWin",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    }
+  ],
+  "witnesses": [
+  ],
+  "contracts": [
+  ]
+}
