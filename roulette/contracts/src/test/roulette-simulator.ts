@@ -5,7 +5,9 @@ import {
     CostModel,
     QueryContext,
     sampleUserAddress,
-    encodeUserAddress
+    createCircuitContext,
+    ContractState,
+    ChargedState
 } from "@midnight-ntwrk/compact-runtime";
 import { 
     Contract,
@@ -20,7 +22,7 @@ import {
 import { 
     type RoulettePrivateState, 
     createRoulettePrivateState,
-    witnesses
+    witnesses,
 } from "../witnesses.js";
 import { randomBytes } from './utils.js';
 
@@ -33,6 +35,7 @@ export class RouletteSimulator {
     maxBets: bigint;
     maxBetAmount: bigint;
     circuitContext: CircuitContext<RoulettePrivateState>;
+    contractState: ContractState;
 
     constructor(winningNum: bigint) {
         this.contract = new Contract<RoulettePrivateState>(witnesses);
@@ -45,7 +48,7 @@ export class RouletteSimulator {
             BetState.CLOSED, 
             BigInt(100),
             this.aliceSk,
-        )
+        );
 
         const {
             currentPrivateState,
@@ -58,6 +61,7 @@ export class RouletteSimulator {
             winningNum,
             this.aliceSk,
         );
+        this.contractState = currentContractState;
         this.circuitContext = {
             currentPrivateState,
             currentZswapLocalState,
@@ -67,9 +71,42 @@ export class RouletteSimulator {
                 this.contractAddress
             ),
         };
+
+        // this.bobContext = createCircuitContext(
+        //     this.contractAddress,
+        //     this.bobAddress,
+        //     //currentZswapLocalState,
+        //     this.bobPrivateState.contractState,
+        //     this.bobPrivateState
+        // );
     }// end of constructor
+
+    public switchCaller(callerContext: CircuitContext): void {
+        this.circuitContext = callerContext;
+    }
+
+    public getContractState(): ChargedState {
+        return this.circuitContext.currentQueryContext.state;
+    }
+
+        //     this.callerContext = createCircuitContext(
+        //     contractAddress,
+        //     this.address,
+        //     contractState,
+        //     this.privateState
+        // );
+    public setAliceContext(contractState: ChargedState): void {
+        this.circuitContext = createCircuitContext(
+            this.contractAddress,
+            this.aliceAddress,
+            contractState,
+            this.alicePrivateState
+        );
+    }
+
     // Wrappers for exported smart contract circuits
     public betColor(betAmount: bigint, colorBet: Color): void {
+        // destruture these from the call in order to grab granular pieces {context, result}
         this.circuitContext = this.contract.impureCircuits.betColor(
             this.circuitContext,
             betAmount,
@@ -109,6 +146,18 @@ export class RouletteSimulator {
         ).context;
     }
 
+    // public betNumber(betAmount: bigint, number: bigint): CircuitContext {
+    //     // destructure to get the context and result seperately (for return values)
+    //     const {context, result} = this.contract.impureCircuits.betNumber(
+    //         this.circuitContext,
+    //         betAmount,
+    //         number
+    //     );
+    //     foo = result;
+    //     this.circuitContext = context;
+    //     return this.circuitContext;
+    // }
+
     public revealWinningNumber(winningNum: bigint, sk: Uint8Array): void {
         this.circuitContext = this.contract.impureCircuits.revealWinningNumber(
             this.circuitContext,
@@ -128,12 +177,35 @@ export class RouletteSimulator {
     }
 }// end of class
 
+
 export class WalletBuilder {
     address: string;
     sk: Uint8Array;
+    callerContext: CircuitContext<RoulettePrivateState>;
+    privateState: RoulettePrivateState;// @TODO -- make better private states
+    contractAddress: string;
 
-    constructor() {
+    // pass in the current contractState at the time of building the wallet
+    // if other calls to the contract are made by other users, the updateCallerContext
+    // needs to be called, passing in the recent contractState
+    constructor(contractAddress: string, contractState: ChargedState) {
         this.address = sampleUserAddress();
         this.sk = randomBytes(32);
+        this.privateState = createRoulettePrivateState(BetState.OPEN, BigInt(19), this.sk);
+        this.contractAddress = contractAddress;
+        this.callerContext = createCircuitContext(
+            this.contractAddress,
+            this.address,
+            contractState,
+            this.privateState
+        );
+    }
+    public updateCallerContext(contractState: ChargedState) : void {
+        this.callerContext = createCircuitContext(
+            this.contractAddress,
+            this.address,
+            contractState,
+            this.privateState
+        );
     }
 }

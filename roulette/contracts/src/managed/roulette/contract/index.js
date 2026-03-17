@@ -131,21 +131,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('betColor',
                                      'argument 1 (as invoked from Typescript)',
-                                     'roulette.compact line 92 char 1',
+                                     'roulette.compact line 89 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(betAmount_0) === 'bigint' && betAmount_0 >= 0n && betAmount_0 <= 255n)) {
           __compactRuntime.typeError('betColor',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'roulette.compact line 92 char 1',
+                                     'roulette.compact line 89 char 1',
                                      'Uint<0..256>',
                                      betAmount_0)
         }
         if (!(typeof(colorBet_0) === 'number' && colorBet_0 >= 0 && colorBet_0 <= 2)) {
           __compactRuntime.typeError('betColor',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'roulette.compact line 92 char 1',
+                                     'roulette.compact line 89 char 1',
                                      'Enum<Color, GREEN, RED, BLACK>',
                                      colorBet_0)
         }
@@ -176,21 +176,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('betThirds',
                                      'argument 1 (as invoked from Typescript)',
-                                     'roulette.compact line 109 char 1',
+                                     'roulette.compact line 107 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(betAmount_0) === 'bigint' && betAmount_0 >= 0n && betAmount_0 <= 255n)) {
           __compactRuntime.typeError('betThirds',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'roulette.compact line 109 char 1',
+                                     'roulette.compact line 107 char 1',
                                      'Uint<0..256>',
                                      betAmount_0)
         }
         if (!(typeof(thirdBet_0) === 'number' && thirdBet_0 >= 0 && thirdBet_0 <= 2)) {
           __compactRuntime.typeError('betThirds',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'roulette.compact line 109 char 1',
+                                     'roulette.compact line 107 char 1',
                                      'Enum<Thirds, FIRST, SECOND, THIRD>',
                                      thirdBet_0)
         }
@@ -221,21 +221,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('betEvenOdd',
                                      'argument 1 (as invoked from Typescript)',
-                                     'roulette.compact line 127 char 1',
+                                     'roulette.compact line 126 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(betAmount_0) === 'bigint' && betAmount_0 >= 0n && betAmount_0 <= 255n)) {
           __compactRuntime.typeError('betEvenOdd',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'roulette.compact line 127 char 1',
+                                     'roulette.compact line 126 char 1',
                                      'Uint<0..256>',
                                      betAmount_0)
         }
         if (!(typeof(betEvenOdd_0) === 'number' && betEvenOdd_0 >= 0 && betEvenOdd_0 <= 1)) {
           __compactRuntime.typeError('betEvenOdd',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'roulette.compact line 127 char 1',
+                                     'roulette.compact line 126 char 1',
                                      'Enum<EvenOdd, EVEN, ODD>',
                                      betEvenOdd_0)
         }
@@ -266,21 +266,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('betBigSmall',
                                      'argument 1 (as invoked from Typescript)',
-                                     'roulette.compact line 145 char 1',
+                                     'roulette.compact line 144 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(betAmount_0) === 'bigint' && betAmount_0 >= 0n && betAmount_0 <= 255n)) {
           __compactRuntime.typeError('betBigSmall',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'roulette.compact line 145 char 1',
+                                     'roulette.compact line 144 char 1',
                                      'Uint<0..256>',
                                      betAmount_0)
         }
         if (!(typeof(betBigSmall_0) === 'number' && betBigSmall_0 >= 0 && betBigSmall_0 <= 1)) {
           __compactRuntime.typeError('betBigSmall',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'roulette.compact line 145 char 1',
+                                     'roulette.compact line 144 char 1',
                                      'Enum<BigSmall, SMALL, BIG>',
                                      betBigSmall_0)
         }
@@ -356,21 +356,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('revealWinningNumber',
                                      'argument 1 (as invoked from Typescript)',
-                                     'roulette.compact line 183 char 1',
+                                     'roulette.compact line 184 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(winningNum_0) === 'bigint' && winningNum_0 >= 0n && winningNum_0 <= 255n)) {
           __compactRuntime.typeError('revealWinningNumber',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'roulette.compact line 183 char 1',
+                                     'roulette.compact line 184 char 1',
                                      'Uint<0..256>',
                                      winningNum_0)
         }
         if (!(_sk_0.buffer instanceof ArrayBuffer && _sk_0.BYTES_PER_ELEMENT === 1 && _sk_0.length === 32)) {
           __compactRuntime.typeError('revealWinningNumber',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'roulette.compact line 183 char 1',
+                                     'roulette.compact line 184 char 1',
                                      'Bytes<32>',
                                      _sk_0)
         }
@@ -399,7 +399,7 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('claimWin',
                                      'argument 1 (as invoked from Typescript)',
-                                     'roulette.compact line 207 char 1',
+                                     'roulette.compact line 208 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
@@ -446,28 +446,28 @@ export class Contract {
     if (!(typeof(setMaxBet_0) === 'bigint' && setMaxBet_0 >= 0n && setMaxBet_0 <= 255n)) {
       __compactRuntime.typeError('Contract state constructor',
                                  'argument 1 (argument 2 as invoked from Typescript)',
-                                 'roulette.compact line 75 char 1',
+                                 'roulette.compact line 72 char 1',
                                  'Uint<0..256>',
                                  setMaxBet_0)
     }
     if (!(typeof(setMaxBetCount_0) === 'bigint' && setMaxBetCount_0 >= 0n && setMaxBetCount_0 <= 255n)) {
       __compactRuntime.typeError('Contract state constructor',
                                  'argument 2 (argument 3 as invoked from Typescript)',
-                                 'roulette.compact line 75 char 1',
+                                 'roulette.compact line 72 char 1',
                                  'Uint<0..256>',
                                  setMaxBetCount_0)
     }
     if (!(typeof(_winningNum_0) === 'bigint' && _winningNum_0 >= 0n && _winningNum_0 <= 255n)) {
       __compactRuntime.typeError('Contract state constructor',
                                  'argument 3 (argument 4 as invoked from Typescript)',
-                                 'roulette.compact line 75 char 1',
+                                 'roulette.compact line 72 char 1',
                                  'Uint<0..256>',
                                  _winningNum_0)
     }
     if (!(_sk_0.buffer instanceof ArrayBuffer && _sk_0.BYTES_PER_ELEMENT === 1 && _sk_0.length === 32)) {
       __compactRuntime.typeError('Contract state constructor',
                                  'argument 4 (argument 5 as invoked from Typescript)',
-                                 'roulette.compact line 75 char 1',
+                                 'roulette.compact line 72 char 1',
                                  'Bytes<32>',
                                  _sk_0)
     }
@@ -938,7 +938,7 @@ export class Contract {
                                        { ins: { cached: true, n: 1 } }]);
     const hash_0 = this._commitWithSk_0(__compactRuntime.convertFieldToBytes(32,
                                                                              _winningNum_0,
-                                                                             'roulette.compact line 85 char 31'),
+                                                                             'roulette.compact line 82 char 31'),
                                         _sk_0);
     __compactRuntime.queryLedgerState(context,
                                       partialProofData,
@@ -1066,6 +1066,23 @@ export class Contract {
                             colorBet_0 === 0,
                             'Please choose a valid color');
     const player_0 = this._ownPublicKey_0(context, partialProofData);
+    __compactRuntime.assert(!this._equal_0(player_0,
+                                           _descriptor_5.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                                                     partialProofData,
+                                                                                                     [
+                                                                                                      { dup: { n: 0 } },
+                                                                                                      { idx: { cached: false,
+                                                                                                               pushPath: false,
+                                                                                                               path: [
+                                                                                                                      { tag: 'value',
+                                                                                                                        value: { value: _descriptor_0.toValue(0n),
+                                                                                                                                 alignment: _descriptor_0.alignment() } },
+                                                                                                                      { tag: 'value',
+                                                                                                                        value: { value: _descriptor_0.toValue(0n),
+                                                                                                                                 alignment: _descriptor_0.alignment() } }] } },
+                                                                                                      { popeq: { cached: false,
+                                                                                                                 result: undefined } }]).value)),
+                            'theHouse cannot make bets');
     const pubAmount_0 = betAmount_0;
     const pubColor_0 = colorBet_0;
     __compactRuntime.queryLedgerState(context,
@@ -1205,6 +1222,23 @@ export class Contract {
     const pubAmount_0 = betAmount_0;
     const pubThird_0 = thirdBet_0;
     const player_0 = this._ownPublicKey_0(context, partialProofData);
+    __compactRuntime.assert(!this._equal_1(player_0,
+                                           _descriptor_5.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                                                     partialProofData,
+                                                                                                     [
+                                                                                                      { dup: { n: 0 } },
+                                                                                                      { idx: { cached: false,
+                                                                                                               pushPath: false,
+                                                                                                               path: [
+                                                                                                                      { tag: 'value',
+                                                                                                                        value: { value: _descriptor_0.toValue(0n),
+                                                                                                                                 alignment: _descriptor_0.alignment() } },
+                                                                                                                      { tag: 'value',
+                                                                                                                        value: { value: _descriptor_0.toValue(0n),
+                                                                                                                                 alignment: _descriptor_0.alignment() } }] } },
+                                                                                                      { popeq: { cached: false,
+                                                                                                                 result: undefined } }]).value)),
+                            'theHouse cannot bet');
     __compactRuntime.queryLedgerState(context,
                                       partialProofData,
                                       [
@@ -1420,6 +1454,24 @@ export class Contract {
                             ===
                             1,
                             'Not ready to accept bets yet');
+    const player_0 = this._ownPublicKey_0(context, partialProofData);
+    __compactRuntime.assert(!this._equal_2(player_0,
+                                           _descriptor_5.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                                                     partialProofData,
+                                                                                                     [
+                                                                                                      { dup: { n: 0 } },
+                                                                                                      { idx: { cached: false,
+                                                                                                               pushPath: false,
+                                                                                                               path: [
+                                                                                                                      { tag: 'value',
+                                                                                                                        value: { value: _descriptor_0.toValue(0n),
+                                                                                                                                 alignment: _descriptor_0.alignment() } },
+                                                                                                                      { tag: 'value',
+                                                                                                                        value: { value: _descriptor_0.toValue(0n),
+                                                                                                                                 alignment: _descriptor_0.alignment() } }] } },
+                                                                                                      { popeq: { cached: false,
+                                                                                                                 result: undefined } }]).value)),
+                            'The house cannot bet');
     __compactRuntime.assert(betAmount_0
                             <=
                             _descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
@@ -1473,23 +1525,7 @@ export class Contract {
     __compactRuntime.assert(betBigSmall_0 === 0 || betBigSmall_0 === 1,
                             'Please choose only Big or Small');
     const pubAmount_0 = betAmount_0;
-    const player_0 = this._ownPublicKey_0(context, partialProofData);
     const pubBigSmall_0 = betBigSmall_0;
-    const tmp_0 = _descriptor_8.fromValue(__compactRuntime.queryLedgerState(context,
-                                                                            partialProofData,
-                                                                            [
-                                                                             { dup: { n: 0 } },
-                                                                             { idx: { cached: false,
-                                                                                      pushPath: false,
-                                                                                      path: [
-                                                                                             { tag: 'value',
-                                                                                               value: { value: _descriptor_0.toValue(1n),
-                                                                                                        alignment: _descriptor_0.alignment() } },
-                                                                                             { tag: 'value',
-                                                                                               value: { value: _descriptor_0.toValue(14n),
-                                                                                                        alignment: _descriptor_0.alignment() } }] } },
-                                                                             { popeq: { cached: false,
-                                                                                        result: undefined } }]).value);
     __compactRuntime.queryLedgerState(context,
                                       partialProofData,
                                       [
@@ -1506,7 +1542,7 @@ export class Contract {
                                                  value: __compactRuntime.StateValue.newCell({ value: _descriptor_5.toValue(player_0),
                                                                                               alignment: _descriptor_5.alignment() }).encode() } },
                                        { push: { storage: true,
-                                                 value: __compactRuntime.StateValue.newCell({ value: _descriptor_8.toValue(tmp_0),
+                                                 value: __compactRuntime.StateValue.newCell({ value: _descriptor_8.toValue(pubBigSmall_0),
                                                                                               alignment: _descriptor_8.alignment() }).encode() } },
                                        { ins: { cached: false, n: 1 } },
                                        { ins: { cached: true, n: 2 } }]);
@@ -1530,7 +1566,7 @@ export class Contract {
                                                                                               alignment: _descriptor_0.alignment() }).encode() } },
                                        { ins: { cached: false, n: 1 } },
                                        { ins: { cached: true, n: 2 } }]);
-    const tmp_1 = 1n;
+    const tmp_0 = 1n;
     __compactRuntime.queryLedgerState(context,
                                       partialProofData,
                                       [
@@ -1544,7 +1580,7 @@ export class Contract {
                                                          value: { value: _descriptor_0.toValue(13n),
                                                                   alignment: _descriptor_0.alignment() } }] } },
                                        { addi: { immediate: parseInt(__compactRuntime.valueToBigInt(
-                                                              { value: _descriptor_11.toValue(tmp_1),
+                                                              { value: _descriptor_11.toValue(tmp_0),
                                                                 alignment: _descriptor_11.alignment() }
                                                                 .value
                                                             )) } },
@@ -1603,6 +1639,23 @@ export class Contract {
                                                                                                   result: undefined } }]).value),
                             'Sorry, the table is full');
     const player_0 = this._ownPublicKey_0(context, partialProofData);
+    __compactRuntime.assert(!this._equal_3(player_0,
+                                           _descriptor_5.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                                                     partialProofData,
+                                                                                                     [
+                                                                                                      { dup: { n: 0 } },
+                                                                                                      { idx: { cached: false,
+                                                                                                               pushPath: false,
+                                                                                                               path: [
+                                                                                                                      { tag: 'value',
+                                                                                                                        value: { value: _descriptor_0.toValue(0n),
+                                                                                                                                 alignment: _descriptor_0.alignment() } },
+                                                                                                                      { tag: 'value',
+                                                                                                                        value: { value: _descriptor_0.toValue(0n),
+                                                                                                                                 alignment: _descriptor_0.alignment() } }] } },
+                                                                                                      { popeq: { cached: false,
+                                                                                                                 result: undefined } }]).value)),
+                            'Cheat Detected: theHouse: cannot bet on its own number');
     __compactRuntime.assert(number_0 >= 0n && number_0 <= 36n,
                             'Please keep the number on the board');
     __compactRuntime.assert(betAmount_0
@@ -1686,7 +1739,7 @@ export class Contract {
     return [];
   }
   _revealWinningNumber_0(context, partialProofData, winningNum_0, _sk_0) {
-    __compactRuntime.assert(this._equal_0(this._ownPublicKey_0(context,
+    __compactRuntime.assert(this._equal_4(this._ownPublicKey_0(context,
                                                                partialProofData),
                                           _descriptor_5.fromValue(__compactRuntime.queryLedgerState(context,
                                                                                                     partialProofData,
@@ -1706,9 +1759,9 @@ export class Contract {
                             'Only the House can reveal the number');
     const hash_0 = this._commitWithSk_0(__compactRuntime.convertFieldToBytes(32,
                                                                              winningNum_0,
-                                                                             'roulette.compact line 185 char 31'),
+                                                                             'roulette.compact line 186 char 31'),
                                         _sk_0);
-    __compactRuntime.assert(this._equal_1(hash_0,
+    __compactRuntime.assert(this._equal_5(hash_0,
                                           _descriptor_2.fromValue(__compactRuntime.queryLedgerState(context,
                                                                                                     partialProofData,
                                                                                                     [
@@ -1899,7 +1952,7 @@ export class Contract {
   }
   _claimWin_0(context, partialProofData) {
     const pubAddress_0 = this._ownPublicKey_0(context, partialProofData);
-    __compactRuntime.assert(!this._equal_2(pubAddress_0,
+    __compactRuntime.assert(!this._equal_6(pubAddress_0,
                                            _descriptor_5.fromValue(__compactRuntime.queryLedgerState(context,
                                                                                                      partialProofData,
                                                                                                      [
@@ -1916,7 +1969,7 @@ export class Contract {
                                                                                                       { popeq: { cached: false,
                                                                                                                  result: undefined } }]).value)),
                             'Only players can check for a win');
-    __compactRuntime.assert(this._equal_3(_descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
+    __compactRuntime.assert(this._equal_7(_descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
                                                                                                     partialProofData,
                                                                                                     [
                                                                                                      { dup: { n: 0 } },
@@ -2126,7 +2179,28 @@ export class Contract {
                                                                                               alignment: _descriptor_9.alignment() }).encode() } },
                                        { ins: { cached: false, n: 1 } },
                                        { ins: { cached: true, n: 2 } }]);
-    if (this._equal_4(_descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
+    if (!_descriptor_4.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                   partialProofData,
+                                                                   [
+                                                                    { dup: { n: 0 } },
+                                                                    { idx: { cached: false,
+                                                                             pushPath: false,
+                                                                             path: [
+                                                                                    { tag: 'value',
+                                                                                      value: { value: _descriptor_0.toValue(0n),
+                                                                                               alignment: _descriptor_0.alignment() } },
+                                                                                    { tag: 'value',
+                                                                                      value: { value: _descriptor_0.toValue(6n),
+                                                                                               alignment: _descriptor_0.alignment() } }] } },
+                                                                    'size',
+                                                                    { push: { storage: false,
+                                                                              value: __compactRuntime.StateValue.newCell({ value: _descriptor_10.toValue(0n),
+                                                                                                                           alignment: _descriptor_10.alignment() }).encode() } },
+                                                                    'eq',
+                                                                    { popeq: { cached: true,
+                                                                               result: undefined } }]).value)
+        &&
+        this._equal_8(_descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
                                                                                 partialProofData,
                                                                                 [
                                                                                  { dup: { n: 0 } },
@@ -2209,7 +2283,7 @@ export class Contract {
                                                                                                 result: undefined } }]).value);
       const tmp_1 = ((t1) => {
                       if (t1 > 4294967295n) {
-                        throw new __compactRuntime.CompactError('roulette.compact line 224 char 39: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 4294967295');
+                        throw new __compactRuntime.CompactError('roulette.compact line 225 char 39: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 4294967295');
                       }
                       return t1;
                     })(newAmount_0);
@@ -2234,7 +2308,28 @@ export class Contract {
                                          { ins: { cached: false, n: 1 } },
                                          { ins: { cached: true, n: 2 } }]);
     }
-    if (_descriptor_1.fromValue(__compactRuntime.queryLedgerState(context,
+    if (!_descriptor_4.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                   partialProofData,
+                                                                   [
+                                                                    { dup: { n: 0 } },
+                                                                    { idx: { cached: false,
+                                                                             pushPath: false,
+                                                                             path: [
+                                                                                    { tag: 'value',
+                                                                                      value: { value: _descriptor_0.toValue(1n),
+                                                                                               alignment: _descriptor_0.alignment() } },
+                                                                                    { tag: 'value',
+                                                                                      value: { value: _descriptor_0.toValue(1n),
+                                                                                               alignment: _descriptor_0.alignment() } }] } },
+                                                                    'size',
+                                                                    { push: { storage: false,
+                                                                              value: __compactRuntime.StateValue.newCell({ value: _descriptor_10.toValue(0n),
+                                                                                                                           alignment: _descriptor_10.alignment() }).encode() } },
+                                                                    'eq',
+                                                                    { popeq: { cached: true,
+                                                                               result: undefined } }]).value)
+        &&
+        _descriptor_1.fromValue(__compactRuntime.queryLedgerState(context,
                                                                   partialProofData,
                                                                   [
                                                                    { dup: { n: 0 } },
@@ -2318,7 +2413,7 @@ export class Contract {
                                                                                                 result: undefined } }]).value);
       const tmp_2 = ((t1) => {
                       if (t1 > 4294967295n) {
-                        throw new __compactRuntime.CompactError('roulette.compact line 229 char 39: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 4294967295');
+                        throw new __compactRuntime.CompactError('roulette.compact line 230 char 39: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 4294967295');
                       }
                       return t1;
                     })(newAmount_1);
@@ -2343,7 +2438,28 @@ export class Contract {
                                          { ins: { cached: false, n: 1 } },
                                          { ins: { cached: true, n: 2 } }]);
     }
-    if (_descriptor_3.fromValue(__compactRuntime.queryLedgerState(context,
+    if (!_descriptor_4.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                   partialProofData,
+                                                                   [
+                                                                    { dup: { n: 0 } },
+                                                                    { idx: { cached: false,
+                                                                             pushPath: false,
+                                                                             path: [
+                                                                                    { tag: 'value',
+                                                                                      value: { value: _descriptor_0.toValue(1n),
+                                                                                               alignment: _descriptor_0.alignment() } },
+                                                                                    { tag: 'value',
+                                                                                      value: { value: _descriptor_0.toValue(3n),
+                                                                                               alignment: _descriptor_0.alignment() } }] } },
+                                                                    'size',
+                                                                    { push: { storage: false,
+                                                                              value: __compactRuntime.StateValue.newCell({ value: _descriptor_10.toValue(0n),
+                                                                                                                           alignment: _descriptor_10.alignment() }).encode() } },
+                                                                    'eq',
+                                                                    { popeq: { cached: true,
+                                                                               result: undefined } }]).value)
+        &&
+        _descriptor_3.fromValue(__compactRuntime.queryLedgerState(context,
                                                                   partialProofData,
                                                                   [
                                                                    { dup: { n: 0 } },
@@ -2427,7 +2543,7 @@ export class Contract {
                                                                                                 result: undefined } }]).value);
       const tmp_3 = ((t1) => {
                       if (t1 > 4294967295n) {
-                        throw new __compactRuntime.CompactError('roulette.compact line 234 char 39: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 4294967295');
+                        throw new __compactRuntime.CompactError('roulette.compact line 235 char 39: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 4294967295');
                       }
                       return t1;
                     })(newAmount_2);
@@ -2452,7 +2568,28 @@ export class Contract {
                                          { ins: { cached: false, n: 1 } },
                                          { ins: { cached: true, n: 2 } }]);
     }
-    if (_descriptor_6.fromValue(__compactRuntime.queryLedgerState(context,
+    if (!_descriptor_4.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                   partialProofData,
+                                                                   [
+                                                                    { dup: { n: 0 } },
+                                                                    { idx: { cached: false,
+                                                                             pushPath: false,
+                                                                             path: [
+                                                                                    { tag: 'value',
+                                                                                      value: { value: _descriptor_0.toValue(1n),
+                                                                                               alignment: _descriptor_0.alignment() } },
+                                                                                    { tag: 'value',
+                                                                                      value: { value: _descriptor_0.toValue(5n),
+                                                                                               alignment: _descriptor_0.alignment() } }] } },
+                                                                    'size',
+                                                                    { push: { storage: false,
+                                                                              value: __compactRuntime.StateValue.newCell({ value: _descriptor_10.toValue(0n),
+                                                                                                                           alignment: _descriptor_10.alignment() }).encode() } },
+                                                                    'eq',
+                                                                    { popeq: { cached: true,
+                                                                               result: undefined } }]).value)
+        &&
+        _descriptor_6.fromValue(__compactRuntime.queryLedgerState(context,
                                                                   partialProofData,
                                                                   [
                                                                    { dup: { n: 0 } },
@@ -2536,7 +2673,7 @@ export class Contract {
                                                                                                 result: undefined } }]).value);
       const tmp_4 = ((t1) => {
                       if (t1 > 4294967295n) {
-                        throw new __compactRuntime.CompactError('roulette.compact line 239 char 39: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 4294967295');
+                        throw new __compactRuntime.CompactError('roulette.compact line 240 char 39: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 4294967295');
                       }
                       return t1;
                     })(newAmount_3);
@@ -2561,7 +2698,28 @@ export class Contract {
                                          { ins: { cached: false, n: 1 } },
                                          { ins: { cached: true, n: 2 } }]);
     }
-    if (_descriptor_8.fromValue(__compactRuntime.queryLedgerState(context,
+    if (!_descriptor_4.fromValue(__compactRuntime.queryLedgerState(context,
+                                                                   partialProofData,
+                                                                   [
+                                                                    { dup: { n: 0 } },
+                                                                    { idx: { cached: false,
+                                                                             pushPath: false,
+                                                                             path: [
+                                                                                    { tag: 'value',
+                                                                                      value: { value: _descriptor_0.toValue(1n),
+                                                                                               alignment: _descriptor_0.alignment() } },
+                                                                                    { tag: 'value',
+                                                                                      value: { value: _descriptor_0.toValue(7n),
+                                                                                               alignment: _descriptor_0.alignment() } }] } },
+                                                                    'size',
+                                                                    { push: { storage: false,
+                                                                              value: __compactRuntime.StateValue.newCell({ value: _descriptor_10.toValue(0n),
+                                                                                                                           alignment: _descriptor_10.alignment() }).encode() } },
+                                                                    'eq',
+                                                                    { popeq: { cached: true,
+                                                                               result: undefined } }]).value)
+        &&
+        _descriptor_8.fromValue(__compactRuntime.queryLedgerState(context,
                                                                   partialProofData,
                                                                   [
                                                                    { dup: { n: 0 } },
@@ -2645,7 +2803,7 @@ export class Contract {
                                                                                                 result: undefined } }]).value);
       const tmp_5 = ((t1) => {
                       if (t1 > 4294967295n) {
-                        throw new __compactRuntime.CompactError('roulette.compact line 244 char 39: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 4294967295');
+                        throw new __compactRuntime.CompactError('roulette.compact line 245 char 39: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 4294967295');
                       }
                       return t1;
                     })(newAmount_4);
@@ -2680,39 +2838,39 @@ export class Contract {
     }
   }
   _getOdd_0(num_0) {
-    if (this._equal_5(num_0, 1n) || this._equal_6(num_0, 3n)
+    if (this._equal_9(num_0, 1n) || this._equal_10(num_0, 3n)
         ||
-        this._equal_7(num_0, 5n)
+        this._equal_11(num_0, 5n)
         ||
-        this._equal_8(num_0, 7n)
+        this._equal_12(num_0, 7n)
         ||
-        this._equal_9(num_0, 9n)
+        this._equal_13(num_0, 9n)
         ||
-        this._equal_10(num_0, 11n)
+        this._equal_14(num_0, 11n)
         ||
-        this._equal_11(num_0, 13n)
+        this._equal_15(num_0, 13n)
         ||
-        this._equal_12(num_0, 15n)
+        this._equal_16(num_0, 15n)
         ||
-        this._equal_13(num_0, 17n)
+        this._equal_17(num_0, 17n)
         ||
-        this._equal_14(num_0, 19n)
+        this._equal_18(num_0, 19n)
         ||
-        this._equal_15(num_0, 21n)
+        this._equal_19(num_0, 21n)
         ||
-        this._equal_16(num_0, 23n)
+        this._equal_20(num_0, 23n)
         ||
-        this._equal_17(num_0, 25n)
+        this._equal_21(num_0, 25n)
         ||
-        this._equal_18(num_0, 27n)
+        this._equal_22(num_0, 27n)
         ||
-        this._equal_19(num_0, 29n)
+        this._equal_23(num_0, 29n)
         ||
-        this._equal_20(num_0, 31n)
+        this._equal_24(num_0, 31n)
         ||
-        this._equal_21(num_0, 33n)
+        this._equal_25(num_0, 33n)
         ||
-        this._equal_22(num_0, 35n))
+        this._equal_26(num_0, 35n))
     {
       return true;
     } else {
@@ -2720,7 +2878,7 @@ export class Contract {
     }
   }
   _getColor_0(num_0) {
-    if (this._equal_23(num_0, 0n)) {
+    if (this._equal_27(num_0, 0n)) {
       return 0;
     } else {
       if (this._getOdd_0(num_0) === true) { return 1; } else { return 2; }
@@ -2738,7 +2896,11 @@ export class Contract {
     return true;
   }
   _equal_1(x0, y0) {
-    if (!x0.every((x, i) => y0[i] === x)) { return false; }
+    {
+      let x1 = x0.bytes;
+      let y1 = y0.bytes;
+      if (!x1.every((x, i) => y1[i] === x)) { return false; }
+    }
     return true;
   }
   _equal_2(x0, y0) {
@@ -2750,19 +2912,31 @@ export class Contract {
     return true;
   }
   _equal_3(x0, y0) {
-    if (x0 !== y0) { return false; }
+    {
+      let x1 = x0.bytes;
+      let y1 = y0.bytes;
+      if (!x1.every((x, i) => y1[i] === x)) { return false; }
+    }
     return true;
   }
   _equal_4(x0, y0) {
-    if (x0 !== y0) { return false; }
+    {
+      let x1 = x0.bytes;
+      let y1 = y0.bytes;
+      if (!x1.every((x, i) => y1[i] === x)) { return false; }
+    }
     return true;
   }
   _equal_5(x0, y0) {
-    if (x0 !== y0) { return false; }
+    if (!x0.every((x, i) => y0[i] === x)) { return false; }
     return true;
   }
   _equal_6(x0, y0) {
-    if (x0 !== y0) { return false; }
+    {
+      let x1 = x0.bytes;
+      let y1 = y0.bytes;
+      if (!x1.every((x, i) => y1[i] === x)) { return false; }
+    }
     return true;
   }
   _equal_7(x0, y0) {
@@ -2830,6 +3004,22 @@ export class Contract {
     return true;
   }
   _equal_23(x0, y0) {
+    if (x0 !== y0) { return false; }
+    return true;
+  }
+  _equal_24(x0, y0) {
+    if (x0 !== y0) { return false; }
+    return true;
+  }
+  _equal_25(x0, y0) {
+    if (x0 !== y0) { return false; }
+    return true;
+  }
+  _equal_26(x0, y0) {
+    if (x0 !== y0) { return false; }
+    return true;
+  }
+  _equal_27(x0, y0) {
     if (x0 !== y0) { return false; }
     return true;
   }
@@ -3005,7 +3195,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'roulette.compact line 56 char 1',
+                                     'roulette.compact line 53 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3037,7 +3227,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'roulette.compact line 56 char 1',
+                                     'roulette.compact line 53 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3126,7 +3316,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'roulette.compact line 57 char 1',
+                                     'roulette.compact line 54 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3158,7 +3348,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'roulette.compact line 57 char 1',
+                                     'roulette.compact line 54 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3247,7 +3437,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'roulette.compact line 58 char 1',
+                                     'roulette.compact line 55 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3279,7 +3469,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'roulette.compact line 58 char 1',
+                                     'roulette.compact line 55 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3368,7 +3558,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'roulette.compact line 59 char 1',
+                                     'roulette.compact line 56 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3400,7 +3590,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'roulette.compact line 59 char 1',
+                                     'roulette.compact line 56 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3489,7 +3679,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'roulette.compact line 60 char 1',
+                                     'roulette.compact line 57 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3521,7 +3711,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'roulette.compact line 60 char 1',
+                                     'roulette.compact line 57 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3610,7 +3800,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'roulette.compact line 61 char 1',
+                                     'roulette.compact line 58 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3642,7 +3832,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'roulette.compact line 61 char 1',
+                                     'roulette.compact line 58 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3731,7 +3921,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'roulette.compact line 62 char 1',
+                                     'roulette.compact line 59 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3763,7 +3953,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'roulette.compact line 62 char 1',
+                                     'roulette.compact line 59 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3852,7 +4042,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'roulette.compact line 63 char 1',
+                                     'roulette.compact line 60 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3884,7 +4074,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'roulette.compact line 63 char 1',
+                                     'roulette.compact line 60 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -3973,7 +4163,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'roulette.compact line 64 char 1',
+                                     'roulette.compact line 61 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -4005,7 +4195,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'roulette.compact line 64 char 1',
+                                     'roulette.compact line 61 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -4094,7 +4284,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'roulette.compact line 65 char 1',
+                                     'roulette.compact line 62 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -4126,7 +4316,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'roulette.compact line 65 char 1',
+                                     'roulette.compact line 62 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -4215,7 +4405,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'roulette.compact line 67 char 1',
+                                     'roulette.compact line 64 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
@@ -4247,7 +4437,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(key_0) === 'object' && key_0.bytes.buffer instanceof ArrayBuffer && key_0.bytes.BYTES_PER_ELEMENT === 1 && key_0.bytes.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'roulette.compact line 67 char 1',
+                                     'roulette.compact line 64 char 1',
                                      'struct ZswapCoinPublicKey<bytes: Bytes<32>>',
                                      key_0)
         }
