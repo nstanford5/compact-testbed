@@ -9,6 +9,11 @@
 // 4. Assign winners (done)
 // 5. [later] pay out
 
+// export ledger numberBets: Map<ZswapCoinPublicKey, Map<Uint<8>, Uint<8>>>;
+// nested map is a good idea, but you MUST use the full chain of lookups to
+// get to the last piece of data, which means you would need the user
+// to input the same data again. Seperate Maps is probably better UX
+
 pragma language_version 0.21;
 import CompactStandardLibrary;
 
@@ -45,11 +50,6 @@ export ledger maxBetCount: Uint<8>;
 export ledger winningNumHash: Bytes<32>;
 export ledger winningNumPublic: Uint<8>;
 export ledger betState: BetState;
-// address, number, amount
-// nested map is a good idea, but you MUST use the full chain of lookups to
-// get to the last piece of data, which means you would need the user
-// to input the same data again. Seperate Maps is probably better UX
-// export ledger numberBets: Map<ZswapCoinPublicKey, Map<Uint<8>, Uint<8>>>;
 export ledger numberBets: Map<ZswapCoinPublicKey, Uint<8>>;
 export ledger numberBetAmounts: Map<ZswapCoinPublicKey, Uint<8>>;
 export ledger colorBets: Map<ZswapCoinPublicKey, Color>;
@@ -95,6 +95,7 @@ export circuit betColor(betAmount: Uint<8>, colorBet: Color): [] {
     
     // bets are all public knowledge
     const player = disclose(ownPublicKey());
+    assert(player != theHouse, "theHouse cannot make bets");
     const pubAmount = disclose(betAmount);// this would be the interesting bit to keep private
     const pubColor = disclose(colorBet);
 
@@ -115,6 +116,7 @@ export circuit betThirds(betAmount: Uint<8>, thirdBet: Thirds): [] {
     const pubAmount = disclose(betAmount);// this is the interesting bit to keep private
     const pubThird = disclose(thirdBet);
     const player = disclose(ownPublicKey());
+    assert(player != theHouse, "theHouse cannot bet");
 
     thirdBets.insert(player, pubThird);
     thirdBetAmounts.insert(player, pubAmount);
@@ -141,15 +143,16 @@ export circuit betEvenOdd(betAmount: Uint<8>, betEvenOdd: EvenOdd) : [] {
 
 export circuit betBigSmall(betAmount: Uint<8>, betBigSmall: BigSmall): [] {
     assert(betState == BetState.OPEN, "Not ready to accept bets yet");
+    const player = disclose(ownPublicKey());
+    assert(player != theHouse, "The house cannot bet");
     assert(betAmount <= maxBet, "That bet exceeds the table limit");
     assert(betCount <= maxBetCount, "Sorry, the table is full");
     assert(betBigSmall == BigSmall.SMALL || betBigSmall == BigSmall.BIG, "Please choose only Big or Small");
 
     const pubAmount = disclose(betAmount);
-    const player = disclose(ownPublicKey());
     const pubBigSmall = disclose(betBigSmall);
 
-    bigSmallBets.insert(player, bigSmall);
+    bigSmallBets.insert(player, pubBigSmall);
     bigSmallBetAmounts.insert(player, pubAmount);
     betCount.increment(1);
 }
@@ -158,6 +161,7 @@ export circuit betNumber(betAmount: Uint<8>, number: Uint<8>) : [] {
     assert(betState == BetState.OPEN, "Not ready to accept bets yet");
     assert(betCount < maxBetCount, "Sorry, the table is full");
     const player = disclose(ownPublicKey());
+    assert(player != theHouse, "Cheat Detected: theHouse: cannot bet on its own number");
     assert(number >= 0 && number <= 36, "Please keep the number on the board");
     assert(betAmount <= maxBet, "Sorry, your bet is too high");
     
@@ -212,30 +216,30 @@ export circuit claimWin(): [] {
         bigSmallBets.lookup(pubAddress) == bigSmall
         , "You did not place a winning bet"
     );
-    // assign them as a winner, then update the amount on the ledger, accounting for
-    // all available bet types
+    // assign them as a winner
     winnerList.insert(pubAddress, 0);
-    if(numberBets.lookup(pubAddress) == winningNumPublic) {
+    // then update the win amount on the ledger, accounting for all bets
+    if(!numberBets.isEmpty() && numberBets.lookup(pubAddress) == winningNumPublic) {
         const tempAmount = winnerList.lookup(pubAddress);
         const newAmount = tempAmount + numberBetAmounts.lookup(pubAddress);
         winnerList.insert(pubAddress, newAmount as Uint<32>);
     }
-    if(colorBets.lookup(pubAddress) == color) {
+    if(!colorBets.isEmpty() && colorBets.lookup(pubAddress) == color) {
         const tempAmount = winnerList.lookup(pubAddress);
         const newAmount = tempAmount + colorBetAmounts.lookup(pubAddress);
         winnerList.insert(pubAddress, newAmount as Uint<32>);
     }
-    if(thirdBets.lookup(pubAddress) == third) {
+    if(!thirdBets.isEmpty() && thirdBets.lookup(pubAddress) == third) {
         const tempAmount = winnerList.lookup(pubAddress);
         const newAmount = tempAmount + thirdBetAmounts.lookup(pubAddress);
         winnerList.insert(pubAddress, newAmount as Uint<32>);
     }
-    if(evenOddBets.lookup(pubAddress) == evenOdd) {
+    if(!evenOddBets.isEmpty() && evenOddBets.lookup(pubAddress) == evenOdd) {
         const tempAmount = winnerList.lookup(pubAddress);
         const newAmount = tempAmount + evenOddBetAmounts.lookup(pubAddress);
         winnerList.insert(pubAddress, newAmount as Uint<32>);
     }
-    if(bigSmallBets.lookup(pubAddress) == bigSmall) {
+    if(!bigSmallBets.isEmpty() && bigSmallBets.lookup(pubAddress) == bigSmall) {
         const tempAmount = winnerList.lookup(pubAddress);
         const newAmount = tempAmount + bigSmallBetAmounts.lookup(pubAddress);
         winnerList.insert(pubAddress, newAmount as Uint<32>);

@@ -22,6 +22,7 @@
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "0.14.0",
     "@midnight-ntwrk/midnight-js-network-id": "3.1.0",
-    "@midnight-ntwrk/compact-js": "2.4.0"
+    "@midnight-ntwrk/compact-js": "2.4.0",
+    "@midnight-ntwrk/testkit-js": "3.1.0"
   }
 }
