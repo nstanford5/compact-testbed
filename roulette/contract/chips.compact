@@ -1,0 +1,81 @@
+// Roulette chips: a shielded token minted by the house and distributed to
+// players. Bets in roulette.compact accept coins of this token's color so
+// the bet amount is hidden inside the zswap UTXO state.
+
+pragma language_version 0.23;
+import CompactStandardLibrary;
+
+// theHouse here is the dapp pubkey of whoever deploys this contract.
+// Uses the same "roulette:pk:" domain separator as roulette.compact so the
+// same player has the same dapp identity in both contracts.
+export sealed ledger theHouse: Bytes<32>;
+export ledger tokenColor: Bytes<32>;
+export ledger totalMinted: Counter;
+export ledger nonceCounter: Counter;
+export ledger nonceSeed: Bytes<32>;
+
+witness localSecretKey(): Bytes<32>;
+
+constructor() {
+    const _sk = localSecretKey();
+    const houseKey = getDappPublicKey(_sk);
+    theHouse = disclose(houseKey);
+    // Seed the nonce stream with a value bound to this deployment so two
+    // chip contracts deployed by the same operator don't collide.
+    nonceSeed = disclose(
+        persistentHash<Vector<2, Bytes<32>>>([pad(32, "roulette:chip-nonce:"), disclose(houseKey)])
+    );
+}
+
+// Only the deployer (the house) can mint. The recipient pubkey is passed as
+// a circuit argument and disclosed to sendShielded; the chip *value* stays
+// inside the zswap UTXO and is not visible on the public ledger.
+export circuit mint(recipient: ZswapCoinPublicKey, amount: Uint<64>): ShieldedSendResult {
+    const _sk = localSecretKey();
+    const caller = getDappPublicKey(_sk);
+    assert(caller == theHouse, "Only the house can mint chips");
+    assert(disclose(amount) > 0, "Mint amount must be positive");
+
+    // Evolve a fresh nonce for this mint.
+    nonceCounter.increment(1);
+    const idx = nonceCounter.read() as Uint<128>;
+    const mintNonce = evolveNonce(idx, nonceSeed);
+    nonceSeed = disclose(mintNonce);
+
+    // Mint to the contract itself, then forward to the recipient via
+    // sendShielded (the "mint to self then send" pattern from the docs).
+    const domain = pad(32, "roulette:chip:");
+    const coin = mintShieldedToken(
+        disclose(domain),
+        disclose(amount),
+        disclose(mintNonce),
+        right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
+    );
+
+    // Remember the color on first mint so other contracts (e.g. roulette)
+    // can query it via the public ledger before accepting bets.
+    if (tokenColor == default<Bytes<32>>) {
+        tokenColor = disclose(coin.color);
+    }
+
+    const qualified = QualifiedShieldedCoinInfo {
+        nonce: coin.nonce,
+        color: coin.color,
+        value: coin.value,
+        mt_index: 0 as Uint<64>
+    };
+    const result = sendShielded(
+        qualified,
+        left<ZswapCoinPublicKey, ContractAddress>(disclose(recipient)),
+        disclose(amount) as Uint<128>
+    );
+
+    totalMinted.increment(disclose(amount) as Uint<16>);
+    return result;
+}
+
+// Identity derivation: matches getDappPublicKey in roulette.compact so the
+// same secret produces the same dapp pubkey across both contracts.
+circuit getDappPublicKey(_secret: Bytes<32>): Bytes<32> {
+    return persistentHash<Vector<2, Bytes<32>>>([pad(32, "roulette:pk:"), _secret]);
+}
