@@ -1,0 +1,293 @@
+// provably fair version of the casino game roulette
+// "the house" can prove that it revealed the number
+// and that number did not change based on the users bet
+//
+// Bets are placed by sending a shielded "roulette chip" coin (minted by
+// chips.compact) to the contract. The bet *type* and *value* (e.g. RED,
+// number 10) are public, but the *amount of chips* is hidden inside the
+// zswap UTXO state. Players are identified on the public ledger only by
+// the Bytes<32> derived from their localSecretKey — their wallet pubkey
+// never appears in roulette ledger state.
+
+pragma language_version 0.23;
+import CompactStandardLibrary;
+
+export enum BetState {
+    CLOSED,
+    OPEN
+}
+
+export enum Color {
+    GREEN,
+    RED,
+    BLACK
+}
+
+export enum Thirds {
+    FIRST,
+    SECOND,
+    THIRD
+}
+
+export enum EvenOdd {
+    EVEN,
+    ODD
+}
+
+export enum BigSmall {
+    SMALL,
+    BIG
+}
+
+export sealed ledger theHouse: Bytes<32>;
+export sealed ledger chipColor: Bytes<32>;
+export sealed ledger maxBetCount: Uint<8>;
+export ledger winningNumHash: Bytes<32>;
+export ledger winningNumPublic: Uint<8>;
+export ledger betState: BetState;
+// All bet maps store only the bet *value* (RED, number 10, etc.) keyed by
+// the player's dapp pseudonym. No per-bet *amount* is recorded — that lives
+// privately inside the chip coin that was sent to the contract.
+export ledger numberBets: Map<Bytes<32>, Uint<8>>;
+export ledger colorBets: Map<Bytes<32>, Color>;
+export ledger thirdBets: Map<Bytes<32>, Thirds>;
+export ledger evenOddBets: Map<Bytes<32>, EvenOdd>;
+export ledger bigSmallBets: Map<Bytes<32>, BigSmall>;
+// Winners — just a set of dapp pseudonyms. No payout amount is tracked.
+export ledger winnerList: Set<Bytes<32>>;
+export ledger color: Color;
+export ledger third: Thirds;
+export ledger evenOdd: EvenOdd;
+export ledger betCount: Counter;
+export ledger bigSmall: BigSmall;
+
+// Caller-supplied secret. Each caller derives a DApp-specific pseudonymous
+// identity from this secret via getDappPublicKey.
+witness localSecretKey(): Bytes<32>;
+
+// _chipColor is the color of the chip token (queried from the deployed
+// chips contract). The roulette contract rejects any bet whose coin color
+// doesn't match.
+constructor(setMaxBetCount: Uint<8>, _winningNum: Uint<8>, _chipColor: Bytes<32>) {
+    // single zero roulette for everyone
+    assert(_winningNum >= 0 && _winningNum <= 36, "Cheat Detected: theHouse: Please keep the number on the table");
+    assert(_chipColor != default<Bytes<32>>, "Chip color must be set");
+
+    const _sk = localSecretKey();
+    const admin = getDappPublicKey(_sk);
+    theHouse = disclose(admin);
+
+    chipColor = disclose(_chipColor);
+    maxBetCount = disclose(setMaxBetCount);
+
+    // hash winning number, post to ledger
+    winningNumHash = commitWithSk(_winningNum as Bytes<32>, _sk);
+    betState = BetState.OPEN;
+}
+
+// Helper: shared opening checks for every bet circuit.
+circuit assertCanBet(player: Bytes<32>, coin: ShieldedCoinInfo): [] {
+    assert(betState == BetState.OPEN, "Not ready to accept bets yet");
+    assert(betCount < maxBetCount, "Sorry, the table is full");
+    assert(player != theHouse, "theHouse cannot make bets");
+    assert(disclose(coin.color) == chipColor, "Bet must be paid in roulette chips");
+    assert(disclose(coin.value) > 0, "Bet must have a positive chip amount");
+}
+
+export circuit betColor(coin: ShieldedCoinInfo, colorBet: Color): [] {
+    assert(colorBet == Color.RED ||
+        colorBet == Color.BLACK ||
+        colorBet == Color.GREEN, "Please choose a valid color");
+
+    const _sk = localSecretKey();
+    const player = getDappPublicKey(_sk);
+    assertCanBet(player, coin);
+
+    // Pull the chip coin into the contract's pool. Its value is not
+    // recorded anywhere on the public ledger.
+    receiveShielded(disclose(coin));
+
+    const pubPlayer = disclose(player);
+    colorBets.insert(pubPlayer, disclose(colorBet));
+    betCount.increment(1);
+}
+
+export circuit betThirds(coin: ShieldedCoinInfo, thirdBet: Thirds): [] {
+    assert(
+        thirdBet == Thirds.FIRST ||
+        thirdBet == Thirds.SECOND ||
+        thirdBet == Thirds.THIRD, "Please choose a valid third bet");
+
+    const _sk = localSecretKey();
+    const player = getDappPublicKey(_sk);
+    assertCanBet(player, coin);
+
+    receiveShielded(disclose(coin));
+
+    const pubPlayer = disclose(player);
+    thirdBets.insert(pubPlayer, disclose(thirdBet));
+    betCount.increment(1);
+}
+
+export circuit betEvenOdd(coin: ShieldedCoinInfo, betEvenOdd: EvenOdd): [] {
+    assert(
+        betEvenOdd == EvenOdd.EVEN ||
+        betEvenOdd == EvenOdd.ODD, "Please choose only Even or Odd"
+    );
+
+    const _sk = localSecretKey();
+    const player = getDappPublicKey(_sk);
+    assertCanBet(player, coin);
+
+    receiveShielded(disclose(coin));
+
+    const pubPlayer = disclose(player);
+    evenOddBets.insert(pubPlayer, disclose(betEvenOdd));
+    betCount.increment(1);
+}
+
+export circuit betBigSmall(coin: ShieldedCoinInfo, betBigSmall: BigSmall): [] {
+    assert(betBigSmall == BigSmall.SMALL || betBigSmall == BigSmall.BIG, "Please choose only Big or Small");
+
+    const _sk = localSecretKey();
+    const player = getDappPublicKey(_sk);
+    assertCanBet(player, coin);
+
+    receiveShielded(disclose(coin));
+
+    const pubPlayer = disclose(player);
+    bigSmallBets.insert(pubPlayer, disclose(betBigSmall));
+    betCount.increment(1);
+}
+
+export circuit betNumber(coin: ShieldedCoinInfo, number: Uint<8>): [] {
+    assert(number >= 0 && number <= 36, "Please keep the number on the board");
+
+    const _sk = localSecretKey();
+    const player = getDappPublicKey(_sk);
+    assertCanBet(player, coin);
+
+    receiveShielded(disclose(coin));
+
+    const pubPlayer = disclose(player);
+    numberBets.insert(pubPlayer, disclose(number));
+    betCount.increment(1);
+}
+
+export circuit revealWinningNumber(winningNum: Uint<8>): [] {
+    const _sk = localSecretKey();
+    const pubKey = getDappPublicKey(_sk);
+    assert(pubKey == theHouse, "Only the House can reveal the number");
+
+    const hash = commitWithSk(winningNum as Bytes<32>, _sk);
+    assert(hash == winningNumHash, "Cheat Detected: theHouse: tried to change the winning number");
+
+    betState = BetState.CLOSED;
+    winningNumPublic = disclose(winningNum);
+    color = getColor(winningNumPublic);
+    third = getThirds(winningNumPublic);
+    evenOdd = getOdd(winningNumPublic) ? EvenOdd.EVEN : EvenOdd.ODD;
+    bigSmall = (winningNumPublic <= 18) ? BigSmall.SMALL : BigSmall.BIG;
+}
+
+// claimWin records the caller as a winner if any of their bets match the
+// revealed winning number. No chips are sent out — chips that were bet
+// stay in the contract's shielded pool. (A future payout circuit could
+// drain the pool back to winners with a multiplier.)
+export circuit claimWin(): [] {
+    assert(betState == BetState.CLOSED, "Winning number has not been revealed");
+
+    const _sk = localSecretKey();
+    const pubAddress = getDappPublicKey(_sk);
+    assert(pubAddress != theHouse, "Only players can claim a win");
+    const player = disclose(pubAddress);
+
+    assert(!winnerList.member(player), "You have already claimed");
+
+    // Compact's Map.lookup errors when the key is missing and the operands
+    // of `||` are not lazily evaluated at the circuit level, so check
+    // membership separately for each bet kind and insert directly into the
+    // winnerList Set on any match (Set insert is idempotent).
+    if (numberBets.member(player)) {
+        if (numberBets.lookup(player) == winningNumPublic) {
+            winnerList.insert(player);
+        }
+    }
+    if (colorBets.member(player)) {
+        if (colorBets.lookup(player) == color) {
+            winnerList.insert(player);
+        }
+    }
+    if (thirdBets.member(player)) {
+        if (thirdBets.lookup(player) == third) {
+            winnerList.insert(player);
+        }
+    }
+    if (evenOddBets.member(player)) {
+        if (evenOddBets.lookup(player) == evenOdd) {
+            winnerList.insert(player);
+        }
+    }
+    if (bigSmallBets.member(player)) {
+        if (bigSmallBets.lookup(player) == bigSmall) {
+            winnerList.insert(player);
+        }
+    }
+
+    assert(winnerList.member(player), "You did not place a winning bet");
+}
+
+circuit getThirds(num: Uint<8>): Thirds {
+    if(num <= 12) { return Thirds.FIRST; }
+    if(num > 12 && num < 25) { return Thirds.SECOND; }
+    else return Thirds.THIRD;
+}
+
+circuit getOdd(num: Uint<8>): Boolean {
+    if(
+        num == 1 ||
+        num == 3 ||
+        num == 5 ||
+        num == 7 ||
+        num == 9 ||
+        num == 11 ||
+        num == 13 ||
+        num == 15 ||
+        num == 17 ||
+        num == 19 ||
+        num == 21 ||
+        num == 23 ||
+        num == 25 ||
+        num == 27 ||
+        num == 29 ||
+        num == 31 ||
+        num == 33 ||
+        num == 35
+    ) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+circuit getColor(num: Uint<8>) : Color {
+    if(num == 0){
+        return Color.GREEN;
+    }
+    if(getOdd(num) == true) {
+        return Color.RED;
+    }
+    else {
+        return Color.BLACK;
+    }
+}
+
+// hash a publicKey specific to this DApp so that users cannot be tracked
+// across DApps. The _secret should be a high-entropy 32-byte value.
+circuit getDappPublicKey(_secret: Bytes<32>): Bytes<32> {
+    return persistentHash<Vector<2, Bytes<32>>>([pad(32, "roulette:pk:"), _secret]);
+}
+
+circuit commitWithSk(_winningNum: Bytes<32>, _sk: Bytes<32>) : Bytes<32> {
+    return disclose(persistentHash<Vector<2, Bytes<32>>>([_winningNum, _sk]));
+}
