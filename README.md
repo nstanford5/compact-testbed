@@ -1,9 +1,8 @@
 # Compact Example Contracts
 
-**Active WIP repo -- all contracts require SME review!**
+This project is built on the Midnight Network.
 
-These contracts are intended for the /examples folders of the docs. All contracts have successful compilation.
+**Active WIP repo!**
 
+This repo acts as a testbed for initial development of Compact contracts. Standalone repos will be created for more mature examples.
 
-## @TODO
-1. Election
