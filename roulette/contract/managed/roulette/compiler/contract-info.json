@@ -52,9 +52,8 @@
         }
       ],
       "result-type": {
-        "type-name": "Tuple",
-        "types": [
-        ]
+        "type-name": "Bytes",
+        "length": 32
       }
     },
     {
@@ -106,9 +105,8 @@
         }
       ],
       "result-type": {
-        "type-name": "Tuple",
-        "types": [
-        ]
+        "type-name": "Bytes",
+        "length": 32
       }
     },
     {
@@ -159,9 +157,8 @@
         }
       ],
       "result-type": {
-        "type-name": "Tuple",
-        "types": [
-        ]
+        "type-name": "Bytes",
+        "length": 32
       }
     },
     {
@@ -212,9 +209,8 @@
         }
       ],
       "result-type": {
-        "type-name": "Tuple",
-        "types": [
-        ]
+        "type-name": "Bytes",
+        "length": 32
       }
     },
     {
@@ -261,9 +257,8 @@
         }
       ],
       "result-type": {
-        "type-name": "Tuple",
-        "types": [
-        ]
+        "type-name": "Bytes",
+        "length": 32
       }
     },
     {
@@ -290,6 +285,32 @@
       "pure": false,
       "proof": true,
       "arguments": [
+        {
+          "name": "betId",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "sweepLoss",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "betId",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
       ],
       "result-type": {
         "type-name": "Tuple",
@@ -314,10 +335,7 @@
   "ledger": [
     {
       "name": "theHouse",
-      "index": [
-        0,
-        0
-      ],
+      "index": 0,
       "exported": true,
       "storage": "Cell",
       "type": {
@@ -327,10 +345,7 @@
     },
     {
       "name": "chipColor",
-      "index": [
-        0,
-        1
-      ],
+      "index": 1,
       "exported": true,
       "storage": "Cell",
       "type": {
@@ -340,10 +355,7 @@
     },
     {
       "name": "maxBetCount",
-      "index": [
-        1,
-        0
-      ],
+      "index": 2,
       "exported": true,
       "storage": "Cell",
       "type": {
@@ -353,10 +365,7 @@
     },
     {
       "name": "winningNumHash",
-      "index": [
-        1,
-        1
-      ],
+      "index": 3,
       "exported": true,
       "storage": "Cell",
       "type": {
@@ -366,10 +375,7 @@
     },
     {
       "name": "winningNumPublic",
-      "index": [
-        1,
-        2
-      ],
+      "index": 4,
       "exported": true,
       "storage": "Cell",
       "type": {
@@ -379,10 +385,7 @@
     },
     {
       "name": "betState",
-      "index": [
-        1,
-        3
-      ],
+      "index": 5,
       "exported": true,
       "storage": "Cell",
       "type": {
@@ -395,11 +398,8 @@
       }
     },
     {
-      "name": "numberBets",
-      "index": [
-        1,
-        4
-      ],
+      "name": "bets",
+      "index": 6,
       "exported": true,
       "storage": "Map",
       "key": {
@@ -407,38 +407,43 @@
         "length": 32
       },
       "value": {
-        "type-name": "Uint",
-        "maxval": 255
-      }
-    },
-    {
-      "name": "colorBets",
-      "index": [
-        1,
-        5
-      ],
-      "exported": true,
-      "storage": "Map",
-      "key": {
-        "type-name": "Bytes",
-        "length": 32
-      },
-      "value": {
-        "type-name": "Enum",
-        "name": "Color",
+        "type-name": "Struct",
+        "name": "BetInfo",
         "elements": [
-          "GREEN",
-          "RED",
-          "BLACK"
+          {
+            "name": "category",
+            "type": {
+              "type-name": "Enum",
+              "name": "BetCategory",
+              "elements": [
+                "NUMBER",
+                "COLOR",
+                "THIRDS",
+                "EVEN_ODD",
+                "BIG_SMALL"
+              ]
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 255
+            }
+          },
+          {
+            "name": "owner",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          }
         ]
       }
     },
     {
-      "name": "thirdBets",
-      "index": [
-        1,
-        6
-      ],
+      "name": "betCoins",
+      "index": 7,
       "exported": true,
       "storage": "Map",
       "key": {
@@ -446,76 +451,43 @@
         "length": 32
       },
       "value": {
-        "type-name": "Enum",
-        "name": "Thirds",
+        "type-name": "Struct",
+        "name": "QualifiedShieldedCoinInfo",
         "elements": [
-          "FIRST",
-          "SECOND",
-          "THIRD"
+          {
+            "name": "nonce",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "color",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 340282366920938463463374607431768211455
+            }
+          },
+          {
+            "name": "mt_index",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 18446744073709551615
+            }
+          }
         ]
-      }
-    },
-    {
-      "name": "evenOddBets",
-      "index": [
-        1,
-        7
-      ],
-      "exported": true,
-      "storage": "Map",
-      "key": {
-        "type-name": "Bytes",
-        "length": 32
-      },
-      "value": {
-        "type-name": "Enum",
-        "name": "EvenOdd",
-        "elements": [
-          "EVEN",
-          "ODD"
-        ]
-      }
-    },
-    {
-      "name": "bigSmallBets",
-      "index": [
-        1,
-        8
-      ],
-      "exported": true,
-      "storage": "Map",
-      "key": {
-        "type-name": "Bytes",
-        "length": 32
-      },
-      "value": {
-        "type-name": "Enum",
-        "name": "BigSmall",
-        "elements": [
-          "SMALL",
-          "BIG"
-        ]
-      }
-    },
-    {
-      "name": "winnerList",
-      "index": [
-        1,
-        9
-      ],
-      "exported": true,
-      "storage": "Set",
-      "type": {
-        "type-name": "Bytes",
-        "length": 32
       }
     },
     {
       "name": "color",
-      "index": [
-        1,
-        10
-      ],
+      "index": 8,
       "exported": true,
       "storage": "Cell",
       "type": {
@@ -530,10 +502,7 @@
     },
     {
       "name": "third",
-      "index": [
-        1,
-        11
-      ],
+      "index": 9,
       "exported": true,
       "storage": "Cell",
       "type": {
@@ -548,10 +517,7 @@
     },
     {
       "name": "evenOdd",
-      "index": [
-        1,
-        12
-      ],
+      "index": 10,
       "exported": true,
       "storage": "Cell",
       "type": {
@@ -564,20 +530,8 @@
       }
     },
     {
-      "name": "betCount",
-      "index": [
-        1,
-        13
-      ],
-      "exported": true,
-      "storage": "Counter"
-    },
-    {
       "name": "bigSmall",
-      "index": [
-        1,
-        14
-      ],
+      "index": 11,
       "exported": true,
       "storage": "Cell",
       "type": {
@@ -588,6 +542,12 @@
           "BIG"
         ]
       }
+    },
+    {
+      "name": "betCount",
+      "index": 12,
+      "exported": true,
+      "storage": "Counter"
     }
   ]
 }

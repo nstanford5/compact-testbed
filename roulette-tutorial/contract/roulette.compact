@@ -1,0 +1,268 @@
+// Tutorial roulette: RED/BLACK bets with a 2x payout on win.
+//
+// Flow:
+// - Alice (theHouse) pre-deposits matching chip coins via `houseDeposit`.
+//   Each deposit is stored under its own nonce as the map key.
+// - A player bets by sending a chip coin via `betColor`. Their chip is
+//   stashed in `betCoins` keyed by the player's dapp pseudonym.
+// - To get 2x back, a winner makes TWO separate calls:
+//     1. `claimMyBet()`   — sends the player's V chips back.
+//     2. `claimMatch(matchKey)` — sends one of Alice's match coins (V).
+//   Two circuits are needed because the node's "effects" budget for a
+//   circuit that does sendShielded is tight (3 coin ops max — see
+//   EffectsCheckFailure 186); doing both in one circuit blows it.
+// - Losers don't claim. Alice uses `houseClaimBet` / `houseClaimMatch`
+//   to sweep the loser's bet and the unused match coin back to her
+//   wallet (same one-coin-per-circuit rule).
+//
+// Equal-denomination invariant:
+// - `betColor` and `houseDeposit` both require the incoming coin's color
+//   to equal `chipColor` (locked in at deploy time).
+// - `claimMatch` enforces `matchCoin.value == betCoin.value` from public
+//   ledger state, so the 2x math is mechanically guaranteed — no off-chain
+//   trust between Alice and the player needed.
+//
+// Privacy model:
+// - PRIVATE: the player's wallet identity (their Zswap pubkey). The on-chain
+//   pseudonym is `persistentHash(["roulette:pk:", sk])` where `sk` is a
+//   player-supplied witness. Provided `sk` is unrelated to wallet keys,
+//   nobody can link the pseudonym to a wallet. The `"roulette:pk:"` domain
+//   separator also prevents linkability to the same player's identity in
+//   other dapps.
+// - PRIVATE: the winning number, until `revealWinningNumber` runs — only
+//   the hash `commitWithSk(num, sk)` is on chain before the reveal.
+// - PUBLIC: the dapp pseudonym (once a player acts), the bet color
+//   (`bets[pseudo]`), the bet value (`betCoins[pseudo].value`), the chip
+//   color (`chipColor`), the win/loss record (`winnerList`,
+//   `matchedWinners`), and every value in `houseCoins`. An observer can
+//   correlate all of a single player's behavior *within* this contract,
+//   and can read what was bet, for how much, and whether it won.
+//
+// This is a deliberate "identity-private, behavior-public" tradeoff. To
+// also hide bet value or color you'd need to replace the public maps with
+// commitment-based storage and reconstruct the coin info via witnesses on
+// claim — a substantial refactor beyond this tutorial's scope.
+
+pragma language_version 0.23;
+import CompactStandardLibrary;
+
+export enum BetState {
+    CLOSED,
+    OPEN
+}
+
+// GREEN is the zero-pocket only; bets are restricted to RED or BLACK.
+export enum Color {
+    GREEN,
+    RED,
+    BLACK
+}
+
+export sealed ledger theHouse: Bytes<32>;
+export sealed ledger chipColor: Bytes<32>;
+export ledger winningNumHash: Bytes<32>;
+export ledger betState: BetState;
+export ledger color: Color;
+export ledger bets: Map<Bytes<32>, Color>;
+// Player's chip coin, awaiting payout (or sweep on loss).
+export ledger betCoins: Map<Bytes<32>, QualifiedShieldedCoinInfo>;
+// Players who already claimed their bet back (phase 1).
+export ledger winnerList: Set<Bytes<32>>;
+// Players who already claimed a match (phase 2).
+export ledger matchedWinners: Set<Bytes<32>>;
+// Alice's pre-deposited match coins. Keyed by the coin's nonce so we
+// don't need a separate deposit counter.
+export ledger houseCoins: Map<Bytes<32>, QualifiedShieldedCoinInfo>;
+
+witness localSecretKey(): Bytes<32>;
+
+constructor(_winningNum: Uint<8>, _chipColor: Bytes<32>) {
+    assert(_winningNum >= 0 && _winningNum <= 36, "Cheat Detected: theHouse: Please keep the number on the table");
+
+    const _sk = localSecretKey();
+    theHouse = disclose(getDappPublicKey(_sk));
+    chipColor = disclose(_chipColor);
+    winningNumHash = commitWithSk(_winningNum as Bytes<32>, _sk);
+    betState = BetState.OPEN;
+}
+
+// Alice deposits a chip coin to back a future bet. Key = coin.nonce.
+export circuit houseDeposit(coin: ShieldedCoinInfo): [] {
+    const _sk = localSecretKey();
+    assert(getDappPublicKey(_sk) == theHouse, "Only the house can deposit match funds");
+    assert(coin.color == chipColor, "Deposit must be made with roulette chips");
+
+    // @TODO -- it feels strange to have to disclose this? It may not be exposed publicly,
+    // but it feels that way to the DApp developer
+    receiveShielded(disclose(coin));
+    houseCoins.insertCoin(
+        disclose(coin.nonce),
+        disclose(coin),
+        right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
+    );
+}
+
+export circuit betColor(coin: ShieldedCoinInfo, colorBet: Color): [] {
+    assert(betState == BetState.OPEN, "Not ready to accept bets yet");
+    assert(colorBet == Color.RED || colorBet == Color.BLACK, "Only RED or BLACK bets are allowed");
+
+    const _sk = localSecretKey();
+    const player = getDappPublicKey(_sk);
+    assert(player != theHouse, "theHouse cannot make bets");
+
+    const pubPlayer = disclose(player);
+    assert(!betCoins.member(pubPlayer), "Already placed a bet this round");
+    assert(disclose(coin.color) == chipColor, "Bet must be made with roulette chips");
+
+    receiveShielded(disclose(coin));
+    betCoins.insertCoin(
+        pubPlayer,
+        disclose(coin),
+        right<ZswapCoinPublicKey, ContractAddress>(kernel.self())
+    );
+    bets.insert(pubPlayer, disclose(colorBet));
+}
+
+export circuit revealWinningNumber(winningNum: Uint<8>): [] {
+    const _sk = localSecretKey();
+    assert(getDappPublicKey(_sk) == theHouse, "Only the House can reveal the number");
+
+    const hash = commitWithSk(winningNum as Bytes<32>, _sk);
+    assert(hash == winningNumHash, "Cheat Detected: theHouse: tried to change the winning number");
+
+    betState = BetState.CLOSED;
+    color = getColor(disclose(winningNum));
+}
+
+// Phase 1 of a winning claim: send the player's bet coin back.
+// Note: `betCoins[player]` is intentionally NOT removed here. `claimMatch`
+// reads it to verify that the chosen match coin's value equals the
+// player's original bet, then removes it.
+export circuit claimMyBet(): [] {
+    assert(betState == BetState.CLOSED, "Winning number has not been revealed");
+
+    const _sk = localSecretKey();
+    const player = disclose(getDappPublicKey(_sk));
+
+    assert(bets.member(player), "You did not place a bet");
+    assert(bets.lookup(player) == color, "You did not place a winning bet");
+    assert(!winnerList.member(player), "Already claimed bet");
+
+    const coin = betCoins.lookup(player);
+    sendShielded(
+        coin,
+        left<ZswapCoinPublicKey, ContractAddress>(ownPublicKey()),
+        coin.value as Uint<128>
+    );
+    winnerList.insert(player);
+}
+
+// Phase 2 of a winning claim: send one of Alice's match coins back to
+// the caller. Caller must have completed claimMyBet first.
+export circuit claimMatch(matchKey: Bytes<32>): [] {
+    const _sk = localSecretKey();
+    const player = disclose(getDappPublicKey(_sk));
+
+    assert(winnerList.member(player), "Must claim your bet first");
+    assert(!matchedWinners.member(player), "Already claimed match");
+    assert(houseCoins.member(disclose(matchKey)), "Match coin not available");
+
+    const matchCoin = houseCoins.lookup(disclose(matchKey));
+    const betCoin = betCoins.lookup(player);
+    assert(matchCoin.value == betCoin.value, "Match coin must equal your bet value");
+
+    sendShielded(
+        matchCoin,
+        left<ZswapCoinPublicKey, ContractAddress>(ownPublicKey()),
+        matchCoin.value as Uint<128>
+    );
+    houseCoins.remove(disclose(matchKey));
+    betCoins.remove(player);
+    matchedWinners.insert(player);
+}
+
+// Alice sweeps a loser's bet coin back to her wallet.
+export circuit houseClaimBet(loserPseudonym: Bytes<32>): [] {
+    assert(betState == BetState.CLOSED, "Winning number has not been revealed");
+
+    const _sk = localSecretKey();
+    assert(getDappPublicKey(_sk) == theHouse, "Only the house can sweep");
+
+    assert(bets.member(disclose(loserPseudonym)), "That player did not place a bet");
+    assert(bets.lookup(disclose(loserPseudonym)) != color, "That player won");
+    assert(betCoins.member(disclose(loserPseudonym)), "No bet coin to sweep");
+
+    const coin = betCoins.lookup(disclose(loserPseudonym));
+    sendShielded(
+        coin,
+        left<ZswapCoinPublicKey, ContractAddress>(ownPublicKey()),
+        coin.value as Uint<128>
+    );
+    betCoins.remove(disclose(loserPseudonym));
+}
+
+// Alice sweeps an unconsumed match coin back to her wallet.
+export circuit houseClaimMatch(matchKey: Bytes<32>): [] {
+    const _sk = localSecretKey();
+    assert(getDappPublicKey(_sk) == theHouse, "Only the house can sweep");
+
+    assert(houseCoins.member(disclose(matchKey)), "Match coin not available");
+
+    const coin = houseCoins.lookup(disclose(matchKey));
+    sendShielded(
+        coin,
+        left<ZswapCoinPublicKey, ContractAddress>(ownPublicKey()),
+        coin.value as Uint<128>
+    );
+    houseCoins.remove(disclose(matchKey));
+}
+
+// Standard single-zero roulette wheel: odd numbers are RED, even are BLACK,
+// and zero is GREEN.
+circuit getOdd(num: Uint<8>): Boolean {
+    if (
+        num == 1 ||
+        num == 3 ||
+        num == 5 ||
+        num == 7 ||
+        num == 9 ||
+        num == 11 ||
+        num == 13 ||
+        num == 15 ||
+        num == 17 ||
+        num == 19 ||
+        num == 21 ||
+        num == 23 ||
+        num == 25 ||
+        num == 27 ||
+        num == 29 ||
+        num == 31 ||
+        num == 33 ||
+        num == 35
+    ) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+circuit getColor(num: Uint<8>): Color {
+    if (num == 0) {
+        return Color.GREEN;
+    }
+    if (getOdd(num) == true) {
+        return Color.RED;
+    } else {
+        return Color.BLACK;
+    }
+}
+
+// hash a publicKey specific to this DApp so that users cannot be tracked
+// across DApps. The _secret should be a high-entropy 32-byte value.
+circuit getDappPublicKey(_secret: Bytes<32>): Bytes<32> {
+    return persistentHash<Vector<2, Bytes<32>>>([pad(32, "roulette:pk:"), _secret]);
+}
+
+circuit commitWithSk(_winningNum: Bytes<32>, _sk: Bytes<32>): Bytes<32> {
+    return disclose(persistentHash<Vector<2, Bytes<32>>>([_winningNum, _sk]));
+}
