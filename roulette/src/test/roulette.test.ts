@@ -25,26 +25,21 @@ import {
     chipsLedger,
     BetState,
     Color,
+    Thirds,
     rouletteZkConfigPath,
     chipsZkConfigPath,
 } from '../../contract/index.js';
 import { createRoulettePrivateState } from '../../contract/witnesses.js';
 import type { EnvironmentConfiguration } from '@midnight-ntwrk/testkit-js';
-import type { FinalizedCallTxData } from '@midnight-ntwrk/midnight-js/contracts';
 
 const logger = pino({
     level: process.env['LOG_LEVEL'] ?? 'info',
     transport: { target: 'pino-pretty' },
 });
 
-// NIGHT token type from the chain — used to filter the chip coin out of the
-// wallet's available shielded coins.
-const NIGHT_TOKEN_TYPE_HEX =
-    '0000000000000000000000000000000000000000000000000000000000000000';
-
 type ShieldedCoinArg = { nonce: Uint8Array; color: Uint8Array; value: bigint };
 
-describe('Roulette + shielded chips via midnight-js', () => {
+describe('Roulette + shielded chips: multi-bet, claim, and house sweep', () => {
     let aliceWallet: MidnightWalletProvider;
     let bobWallet: MidnightWalletProvider;
     let claireWallet: MidnightWalletProvider;
@@ -64,6 +59,12 @@ describe('Roulette + shielded chips via midnight-js', () => {
     let chipColorHex: string;
     let rouletteAddress: ContractAddress;
 
+    // Captured betIds from each bet call so the corresponding claim / sweep
+    // calls know which entry to settle.
+    const bobWinningBetIds: Uint8Array[] = [];
+    const bobLosingBetIds: Uint8Array[] = [];
+    const claireLosingBetIds: Uint8Array[] = [];
+
     const config = getConfig();
     const seed1 = '0000000000000000000000000000000000000000000000000000000000000001';
     const seed2 = '0000000000000000000000000000000000000000000000000000000000000002';
@@ -78,8 +79,15 @@ describe('Roulette + shielded chips via midnight-js', () => {
 
     const MAX_BET_COUNT = 10n;
     const WINNING_NUMBER = 10n;
+    // With winningNum=10 the contract resolves:
+    //   color=BLACK, third=FIRST (10 ≤ 12), bigSmall=SMALL,
+    //   evenOdd=ODD (legacy quirk — see roulette.compact:revealWinningNumber).
+    // Bob's bets are picked so two win and one loses; Claire's both lose.
 
-    // Each wallet has its own roulette/chips secret (so dapp pseudonyms differ).
+    const CHIP_DENOM = 50n;
+    const BOB_CHIP_COUNT = 3;
+    const CLAIRE_CHIP_COUNT = 2;
+
     const aliceSk = new Uint8Array(randomBytes(32));
     const bobSk = new Uint8Array(randomBytes(32));
     const claireSk = new Uint8Array(randomBytes(32));
@@ -91,16 +99,24 @@ describe('Roulette + shielded chips via midnight-js', () => {
         return rouletteLedger(state!.data);
     }
 
-    // Pull a shielded coin of `chipColor` out of a wallet's pool and reshape
-    // it to the ShieldedCoinInfo argument expected by the bet circuits.
+    // Pull a single chip UTXO out of a wallet's pool. Spent coins disappear
+    // from availableCoins after the next sync, so callers must sync between
+    // bets to avoid grabbing the same UTXO twice.
     async function takeChipCoin(
         walletProvider: MidnightWalletProvider,
+        label: string,
     ): Promise<ShieldedCoinArg> {
         const facadeState = await walletProvider.wallet.waitForSyncedState();
-        const coins = facadeState.shielded.availableCoins;
-        const chip = coins.find((c) => c.coin.type === chipColorHex);
+        const allCoins = facadeState.shielded.availableCoins;
+        const chips = allCoins.filter((c) => c.coin.type === chipColorHex);
+        logger.info(
+            `[${label}] availableCoins=${allCoins.length}, chipUTXOs=${chips.length}, ` +
+            `nonces=[${chips.map((c) => c.coin.nonce.slice(0, 8)).join(',')}], ` +
+            `values=[${chips.map((c) => c.coin.value.toString()).join(',')}]`,
+        );
+        const chip = chips[0];
         if (!chip) {
-            const seen = coins.map((c) => c.coin.type).join(', ');
+            const seen = allCoins.map((c) => c.coin.type).join(', ');
             throw new Error(
                 `No chip coin (type=${chipColorHex}) in wallet. Saw types: [${seen}]`,
             );
@@ -110,6 +126,17 @@ describe('Roulette + shielded chips via midnight-js', () => {
             color: chipColorBytes,
             value: chip.coin.value,
         };
+    }
+
+    async function chipBalance(walletProvider: MidnightWalletProvider): Promise<bigint> {
+        const facadeState = await walletProvider.wallet.waitForSyncedState();
+        return facadeState.shielded.balances[chipColorHex] ?? 0n;
+    }
+
+    async function logDust(label: string, walletProvider: MidnightWalletProvider): Promise<void> {
+        const facadeState = await walletProvider.wallet.waitForSyncedState();
+        const dustBal = facadeState.dust.balance(new Date());
+        logger.info(`[${label}] dust balance: ${dustBal}`);
     }
 
     beforeAll(async () => {
@@ -169,9 +196,7 @@ describe('Roulette + shielded chips via midnight-js', () => {
         expect(chipsAddress).toBeDefined();
     });
 
-    it('Alice mints chips to Bob and Claire', async () => {
-        // Bob and Claire seed their chips/roulette private state with their
-        // own secrets so that each wallet has its own dapp pseudonym.
+    it('Alice mints multiple chip coins to Bob and Claire', async () => {
         const bobPS = createRoulettePrivateState(bobSk);
         const clairePS = createRoulettePrivateState(claireSk);
         bobChipsProv.privateStateProvider.setContractAddress(chipsAddress);
@@ -184,35 +209,37 @@ describe('Roulette + shielded chips via midnight-js', () => {
         const bobCoinPkBytes = { bytes: encodeCoinPublicKey(bobCoinPk) };
         const claireCoinPkBytes = { bytes: encodeCoinPublicKey(claireCoinPk) };
 
-        // The SDK needs each recipient's encryption public key to encrypt the
-        // shielded output's value field. Each wallet exposes its own; pass
-        // them as additionalCoinEncPublicKeyMappings on the call.
         const encMap = new Map<string, string>([
             [bobCoinPk, bobWallet.getEncryptionPublicKey()],
             [claireCoinPk, claireWallet.getEncryptionPublicKey()],
         ]);
 
-        logger.info('Alice minting 200 chips to Bob...');
-        await (submitCallTx<ChipsContract, 'mint'>)(aliceChipsProv, {
-            compiledContract: CompiledChipsContract,
-            contractAddress: chipsAddress,
-            privateStateId: ALICE_CHIPS_PRIVATE_ID,
-            circuitId: 'mint',
-            args: [bobCoinPkBytes, 200n],
-            additionalCoinEncPublicKeyMappings: encMap,
-        });
-        logger.info('Alice minting 200 chips to Claire...');
-        await (submitCallTx<ChipsContract, 'mint'>)(aliceChipsProv, {
-            compiledContract: CompiledChipsContract,
-            contractAddress: chipsAddress,
-            privateStateId: ALICE_CHIPS_PRIVATE_ID,
-            circuitId: 'mint',
-            args: [claireCoinPkBytes, 200n],
-            additionalCoinEncPublicKeyMappings: encMap,
-        });
+        // Mint one CHIP_DENOM coin per intended bet so each bet can spend a
+        // distinct shielded UTXO. (The wallet would otherwise need to split a
+        // single fat coin, which complicates multi-bet UX in tests.)
+        for (let i = 0; i < BOB_CHIP_COUNT; i++) {
+            logger.info(`Alice minting ${CHIP_DENOM} chips to Bob (${i + 1}/${BOB_CHIP_COUNT})`);
+            await (submitCallTx<ChipsContract, 'mint'>)(aliceChipsProv, {
+                compiledContract: CompiledChipsContract,
+                contractAddress: chipsAddress,
+                privateStateId: ALICE_CHIPS_PRIVATE_ID,
+                circuitId: 'mint',
+                args: [bobCoinPkBytes, CHIP_DENOM],
+                additionalCoinEncPublicKeyMappings: encMap,
+            });
+        }
+        for (let i = 0; i < CLAIRE_CHIP_COUNT; i++) {
+            logger.info(`Alice minting ${CHIP_DENOM} chips to Claire (${i + 1}/${CLAIRE_CHIP_COUNT})`);
+            await (submitCallTx<ChipsContract, 'mint'>)(aliceChipsProv, {
+                compiledContract: CompiledChipsContract,
+                contractAddress: chipsAddress,
+                privateStateId: ALICE_CHIPS_PRIVATE_ID,
+                circuitId: 'mint',
+                args: [claireCoinPkBytes, CHIP_DENOM],
+                additionalCoinEncPublicKeyMappings: encMap,
+            });
+        }
 
-        // Read the chip color off the contract's ledger so the test can find
-        // the chip coin in each player's wallet.
         const chipsState =
             await aliceChipsProv.publicDataProvider.queryContractState(chipsAddress);
         expect(chipsState).not.toBeNull();
@@ -220,19 +247,13 @@ describe('Roulette + shielded chips via midnight-js', () => {
         chipColorBytes = ledger.tokenColor;
         chipColorHex = decodeRawTokenType(chipColorBytes);
         logger.info(`Chip token color: ${chipColorHex}`);
-        expect(chipColorBytes.some((b) => b !== 0)).toBe(true);
 
-        // Bob's and Claire's shielded wallets should now hold chip coins.
         await syncWallet(logger, bobWallet.wallet, 600_000);
         await syncWallet(logger, claireWallet.wallet, 600_000);
-        const bobState = await bobWallet.wallet.waitForSyncedState();
-        const claireState = await claireWallet.wallet.waitForSyncedState();
-        const bobChipBalance = bobState.shielded.balances[chipColorHex] ?? 0n;
-        const claireChipBalance = claireState.shielded.balances[chipColorHex] ?? 0n;
-        logger.info(`Bob chip balance: ${bobChipBalance}`);
-        logger.info(`Claire chip balance: ${claireChipBalance}`);
-        expect(bobChipBalance).toEqual(200n);
-        expect(claireChipBalance).toEqual(200n);
+        expect(await chipBalance(bobWallet)).toEqual(CHIP_DENOM * BigInt(BOB_CHIP_COUNT));
+        expect(await chipBalance(claireWallet)).toEqual(CHIP_DENOM * BigInt(CLAIRE_CHIP_COUNT));
+        // Alice never minted to herself.
+        expect(await chipBalance(aliceWallet)).toEqual(0n);
     });
 
     it('Alice deploys the roulette contract referencing the chip color', async () => {
@@ -254,56 +275,114 @@ describe('Roulette + shielded chips via midnight-js', () => {
         expect(state.betState).toEqual(BetState.OPEN);
         expect(state.maxBetCount).toEqual(MAX_BET_COUNT);
         expect(state.betCount).toEqual(0n);
-        expect(Buffer.from(state.chipColor).toString('hex')).toEqual(
-            Buffer.from(chipColorBytes).toString('hex'),
-        );
     });
 
-    it('Bob places a number bet using a chip coin', async () => {
+    it('Bob places three bets (number, color, color) and captures their betIds', async () => {
         const bobPS = createRoulettePrivateState(bobSk);
         bobRouletteProv.privateStateProvider.setContractAddress(rouletteAddress);
         await bobRouletteProv.privateStateProvider.set(BOB_ROULETTE_PRIVATE_ID, bobPS);
+        await logDust('bob-before-bets', bobWallet);
+        await logDust('alice-before-bets', aliceWallet);
+        await logDust('claire-before-bets', claireWallet);
 
-        const chip = await takeChipCoin(bobWallet);
-        logger.info(`Bob is betting a chip coin (value=${chip.value}) on number ${WINNING_NUMBER}`);
-
-        const _txData: FinalizedCallTxData<RouletteContract, 'betNumber'> =
-            await (submitCallTx<RouletteContract, 'betNumber'>)(bobRouletteProv, {
+        // Winning bet: betNumber(10) — exact match on the revealed number.
+        {
+            const chip = await takeChipCoin(bobWallet, "bob");
+            logger.info(`Bob bet #1: number=${WINNING_NUMBER}`);
+            const tx = await (submitCallTx<RouletteContract, 'betNumber'>)(bobRouletteProv, {
                 compiledContract: CompiledRouletteContract,
                 contractAddress: rouletteAddress,
                 privateStateId: BOB_ROULETTE_PRIVATE_ID,
                 circuitId: 'betNumber',
                 args: [chip, WINNING_NUMBER],
             });
+            const betId = tx.private.result;
+            logger.info(`  betId=${Buffer.from(betId).toString('hex')}`);
+            bobWinningBetIds.push(betId);
+            await syncWallet(logger, bobWallet.wallet, 600_000);
+        }
+
+        // Winning bet: betColor(BLACK) — 10 is even and non-zero → BLACK.
+        {
+            const chip = await takeChipCoin(bobWallet, "bob");
+            logger.info(`Bob bet #2: color=BLACK`);
+            const tx = await (submitCallTx<RouletteContract, 'betColor'>)(bobRouletteProv, {
+                compiledContract: CompiledRouletteContract,
+                contractAddress: rouletteAddress,
+                privateStateId: BOB_ROULETTE_PRIVATE_ID,
+                circuitId: 'betColor',
+                args: [chip, Color.BLACK],
+            });
+            const betId = tx.private.result;
+            logger.info(`  betId=${Buffer.from(betId).toString('hex')}`);
+            bobWinningBetIds.push(betId);
+            await syncWallet(logger, bobWallet.wallet, 600_000);
+        }
+
+        // Losing bet: betColor(RED) — wrong color.
+        {
+            const chip = await takeChipCoin(bobWallet, "bob");
+            logger.info(`Bob bet #3: color=RED (intentionally losing)`);
+            const tx = await (submitCallTx<RouletteContract, 'betColor'>)(bobRouletteProv, {
+                compiledContract: CompiledRouletteContract,
+                contractAddress: rouletteAddress,
+                privateStateId: BOB_ROULETTE_PRIVATE_ID,
+                circuitId: 'betColor',
+                args: [chip, Color.RED],
+            });
+            const betId = tx.private.result;
+            logger.info(`  betId=${Buffer.from(betId).toString('hex')}`);
+            bobLosingBetIds.push(betId);
+            await syncWallet(logger, bobWallet.wallet, 600_000);
+        }
 
         const state = await queryRoulette();
-        expect(state.betCount).toEqual(1n);
+        expect(state.betCount).toEqual(3n);
+        expect(state.bets.size()).toEqual(3n);
+        expect(await chipBalance(bobWallet)).toEqual(0n);
     });
 
-    it('Claire places a color bet on RED using a chip coin', async () => {
+    it('Claire places two losing bets (color RED, thirds THIRD)', async () => {
         const clairePS = createRoulettePrivateState(claireSk);
         claireRouletteProv.privateStateProvider.setContractAddress(rouletteAddress);
         await claireRouletteProv.privateStateProvider.set(CLAIRE_ROULETTE_PRIVATE_ID, clairePS);
 
-        const chip = await takeChipCoin(claireWallet);
-        logger.info(`Claire is betting a chip coin (value=${chip.value}) on RED`);
+        {
+            const chip = await takeChipCoin(claireWallet, "claire");
+            logger.info('Claire bet #1: color=RED (intentionally losing)');
+            const tx = await (submitCallTx<RouletteContract, 'betColor'>)(claireRouletteProv, {
+                compiledContract: CompiledRouletteContract,
+                contractAddress: rouletteAddress,
+                privateStateId: CLAIRE_ROULETTE_PRIVATE_ID,
+                circuitId: 'betColor',
+                args: [chip, Color.RED],
+            });
+            claireLosingBetIds.push(tx.private.result);
+            await syncWallet(logger, claireWallet.wallet, 600_000);
+        }
 
-        await (submitCallTx<RouletteContract, 'betColor'>)(claireRouletteProv, {
-            compiledContract: CompiledRouletteContract,
-            contractAddress: rouletteAddress,
-            privateStateId: CLAIRE_ROULETTE_PRIVATE_ID,
-            circuitId: 'betColor',
-            args: [chip, Color.RED],
-        });
+        // 10 is in the FIRST third (≤ 12), so a THIRD bet loses.
+        {
+            const chip = await takeChipCoin(claireWallet, "claire");
+            logger.info('Claire bet #2: thirds=THIRD (intentionally losing)');
+            const tx = await (submitCallTx<RouletteContract, 'betThirds'>)(claireRouletteProv, {
+                compiledContract: CompiledRouletteContract,
+                contractAddress: rouletteAddress,
+                privateStateId: CLAIRE_ROULETTE_PRIVATE_ID,
+                circuitId: 'betThirds',
+                args: [chip, Thirds.THIRD],
+            });
+            claireLosingBetIds.push(tx.private.result);
+            await syncWallet(logger, claireWallet.wallet, 600_000);
+        }
 
         const state = await queryRoulette();
-        expect(state.betCount).toEqual(2n);
+        expect(state.betCount).toEqual(5n);
+        expect(state.bets.size()).toEqual(5n);
+        expect(await chipBalance(claireWallet)).toEqual(0n);
     });
 
     it('Blocks Alice (the house) from placing a bet', async () => {
-        // Alice would need a chip coin to even attempt this; she has none.
-        // The bet should fail either at chip-presence or at the
-        // `player != theHouse` assert. We accept either failure mode.
         logger.info('Alice tries to bet (should fail)...');
         await expect(async () => {
             const dummy: ShieldedCoinArg = {
@@ -319,7 +398,6 @@ describe('Roulette + shielded chips via midnight-js', () => {
                 args: [dummy, 20n],
             });
         }).rejects.toThrow();
-        logger.info('Alice was rejected.');
     });
 
     it('Alice reveals the winning number', async () => {
@@ -335,18 +413,120 @@ describe('Roulette + shielded chips via midnight-js', () => {
         const state = await queryRoulette();
         expect(state.betState).toEqual(BetState.CLOSED);
         expect(state.winningNumPublic).toEqual(WINNING_NUMBER);
+        expect(state.color).toEqual(Color.BLACK);
+        expect(state.third).toEqual(Thirds.FIRST);
     });
 
-    it('Bob claims his win — recorded by dapp pseudonym only', async () => {
-        await (submitCallTx<RouletteContract, 'claimWin'>)(bobRouletteProv, {
-            compiledContract: CompiledRouletteContract,
-            contractAddress: rouletteAddress,
-            privateStateId: BOB_ROULETTE_PRIVATE_ID,
-            circuitId: 'claimWin',
-        });
+    it('Bob claims both winning bets and recovers his chips', async () => {
+        expect(await chipBalance(bobWallet)).toEqual(0n);
 
+        for (const betId of bobWinningBetIds) {
+            logger.info(`Bob claims betId=${Buffer.from(betId).toString('hex')}`);
+            await (submitCallTx<RouletteContract, 'claimWin'>)(bobRouletteProv, {
+                compiledContract: CompiledRouletteContract,
+                contractAddress: rouletteAddress,
+                privateStateId: BOB_ROULETTE_PRIVATE_ID,
+                circuitId: 'claimWin',
+                args: [betId],
+            });
+        }
+
+        await syncWallet(logger, bobWallet.wallet, 600_000);
+        expect(await chipBalance(bobWallet)).toEqual(
+            CHIP_DENOM * BigInt(bobWinningBetIds.length),
+        );
+
+        // Only Bob's losing bet and Claire's two losing bets remain on-chain.
         const state = await queryRoulette();
-        // Exactly one winner, identified only by their dapp pseudonym.
-        expect(state.winnerList.size()).toEqual(1n);
+        expect(state.bets.size()).toEqual(
+            BigInt(bobLosingBetIds.length + claireLosingBetIds.length),
+        );
     });
+
+    it('Bob cannot reclaim a settled bet', async () => {
+        const settled = bobWinningBetIds[0]!;
+        await expect(async () => {
+            await (submitCallTx<RouletteContract, 'claimWin'>)(bobRouletteProv, {
+                compiledContract: CompiledRouletteContract,
+                contractAddress: rouletteAddress,
+                privateStateId: BOB_ROULETTE_PRIVATE_ID,
+                circuitId: 'claimWin',
+                args: [settled],
+            });
+        }).rejects.toThrow();
+    });
+
+    it('Claire cannot claim her losing bets', async () => {
+        for (const betId of claireLosingBetIds) {
+            await expect(async () => {
+                await (submitCallTx<RouletteContract, 'claimWin'>)(claireRouletteProv, {
+                    compiledContract: CompiledRouletteContract,
+                    contractAddress: rouletteAddress,
+                    privateStateId: CLAIRE_ROULETTE_PRIVATE_ID,
+                    circuitId: 'claimWin',
+                    args: [betId],
+                });
+            }).rejects.toThrow();
+        }
+        expect(await chipBalance(claireWallet)).toEqual(0n);
+    });
+
+    it('A non-house caller cannot sweep losses', async () => {
+        const someLoss = claireLosingBetIds[0]!;
+        await expect(async () => {
+            await (submitCallTx<RouletteContract, 'sweepLoss'>)(bobRouletteProv, {
+                compiledContract: CompiledRouletteContract,
+                contractAddress: rouletteAddress,
+                privateStateId: BOB_ROULETTE_PRIVATE_ID,
+                circuitId: 'sweepLoss',
+                args: [someLoss],
+            });
+        }).rejects.toThrow();
+    });
+
+    it('Alice cannot sweep a winning bet', async () => {
+        // bobWinningBetIds[0] has been claimed by Bob already so it's gone
+        // from `bets`. Attempt a sweep against the (now-removed) entry: the
+        // "Unknown or already-settled bet" branch should reject.
+        const claimed = bobWinningBetIds[0]!;
+        await expect(async () => {
+            await (submitCallTx<RouletteContract, 'sweepLoss'>)(aliceRouletteProv, {
+                compiledContract: CompiledRouletteContract,
+                contractAddress: rouletteAddress,
+                privateStateId: ALICE_ROULETTE_PRIVATE_ID,
+                circuitId: 'sweepLoss',
+                args: [claimed],
+            });
+        }).rejects.toThrow();
+    });
+
+    it('Alice sweeps all losing bets to her own wallet', async () => {
+        const aliceBefore = await chipBalance(aliceWallet);
+        expect(aliceBefore).toEqual(0n);
+
+        const allLosses = [...bobLosingBetIds, ...claireLosingBetIds];
+        for (const betId of allLosses) {
+            logger.info(`Alice sweeps betId=${Buffer.from(betId).toString('hex')}`);
+            await (submitCallTx<RouletteContract, 'sweepLoss'>)(aliceRouletteProv, {
+                compiledContract: CompiledRouletteContract,
+                contractAddress: rouletteAddress,
+                privateStateId: ALICE_ROULETTE_PRIVATE_ID,
+                circuitId: 'sweepLoss',
+                args: [betId],
+            });
+        }
+
+        await syncWallet(logger, aliceWallet.wallet, 600_000);
+        expect(await chipBalance(aliceWallet)).toEqual(
+            CHIP_DENOM * BigInt(allLosses.length),
+        );
+
+        // All bets settled.
+        const state = await queryRoulette();
+        expect(state.bets.size()).toEqual(0n);
+        expect(state.betCoins.size()).toEqual(0n);
+        // betCount is monotonic — it records total bets ever placed.
+        expect(state.betCount).toEqual(5n);
+    });
+
 });
