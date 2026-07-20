@@ -95,6 +95,7 @@ export circuit houseDeposit(coin: ShieldedCoinInfo): [] {
     // @TODO -- it feels strange to have to disclose this? It may not be exposed publicly,
     // but it feels that way to the DApp developer
     receiveShielded(disclose(coin));
+    // .insertCoin transforms ShieldedCoinInfo into QualifiedShieldedCoinInfo
     houseCoins.insertCoin(
         disclose(coin.nonce),
         disclose(coin),
